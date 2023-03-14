@@ -142,7 +142,7 @@ start:
 
 ;
 ; Получить размер экрана и вычислить координаты окна на экране, чтобы
-; оно было расположено по ценру экрана
+; оно было расположено по центру экрана
 ;
         push    L SM_CXSCREEN
         call    GetSystemMetrics
@@ -316,7 +316,7 @@ IconText:
         push    edx
         push    edx
 
-        ; Получить размер шрифта
+        ; Получить размер текста
         push    offset txtSize
         push    IconLen[ebx]      ; Длина строки
         push    IconName[ebx]     ; Сама строка

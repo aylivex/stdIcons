@@ -193,22 +193,6 @@ start:
         push    eax                      ; hMenu
         call    InsertMenuA              ; Добавить новый пункт
 
-        ; Запретить доступ к командам, которые не подходят для наших целей
-        push    L MF_GRAYED
-        push    L SC_RESTORE             ; Пункт "Восстановить"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        push    L MF_GRAYED
-        push    L SC_SIZE                ; Пункт "Размер"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        push    L MF_GRAYED
-        push    L SC_MAXIMIZE            ; Пункт "Развернуть"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
         ; Показать окно
         push    L SW_SHOWNORMAL
         push    [newhwnd]
@@ -401,40 +385,7 @@ CreateIcon:
 
 wmsyscommand:
         cmp     [wparam], SC_ABOUT
-        je      scabout
-
-        cmp     [wparam], SC_MINIMIZE
-        je      scminimize
-
-        cmp     [wparam], SC_RESTORE
-        jne     defwndproc        ; Остальные команды системного меню
-                                  ;  мы не обрабатываем по-своему
-
-        ; Выбрана команда "Восстановить"
-        push    L MF_GRAYED       ; Сделать ее недоступной
-        push    L SC_RESTORE
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        push    L MF_ENABLED      ; Но сделать доступной
-        push    L SC_MINIMIZE     ;  команду "Свернуть"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        jmp     defwndproc        ; Вызвать стандартный обработчик
-
-scminimize:     ; Выбрана команда "Свернуть"
-        push    L MF_ENABLED      ; Сделать доступной
-        push    L SC_RESTORE      ;  команду "Восстановить"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        push    L MF_GRAYED       ; Сделать недоступной
-        push    L SC_MINIMIZE     ;  команду "Свернуть"
-        push    [hSysMenu]
-        call    EnableMenuItem
-
-        jmp     defwndproc        ; Вызвать стандартный обработчик
+        jne     defwndproc
 
 scabout:        ; Выбрана команда "О Программе"
         push    MB_OK OR MB_ICONASTERISK ; Вывести окно сообщения

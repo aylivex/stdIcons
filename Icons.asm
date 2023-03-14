@@ -1,12 +1,10 @@
 ; Copyright (c) 1998-2023 Alexey Ivanov
 ;
 .386                        ; Разрешить инструкции процессора 80386
-locals                      ; Разрешить использование локальных переменных
-jumps
 .model flat, STDCALL        ; Задать модель для 32битных программ
 include win32.inc           ; 32битные константы и структуры
 
-L equ <LARGE>               ; Указатель типа
+L equ DWORD PTR             ; Указатель типа 32 бита
 
 ; Тип окна
 WndStyle = WS_OVERLAPPED OR WS_CAPTION OR WS_BORDER OR WS_SYSMENU OR WS_MINIMIZEBOX

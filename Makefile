@@ -21,7 +21,7 @@ IMPORT=import32
 
 
 $(EXE): $(OBJS) $(DEF)
-  tlink32 /Tpe /aa /c /M /s /m $(LINKDEBUG) $(LIBPATH) $(OBJS),$(EXE),, $(IMPORT), $(DEF)
+  tlink32 /Tpe /aa /c /M /s /m $(LINKDEBUG) /L$(LIBPATH) $(OBJS),$(EXE),, $(IMPORT), $(DEF)
 
 .asm.obj:
-   tasm32 $(TASMDEBUG) $(INCLUDE) /ml $&.asm
+   tasm32 /D__tasm__ $(TASMDEBUG) /i$(INCLUDEPATH) /ml $&.asm

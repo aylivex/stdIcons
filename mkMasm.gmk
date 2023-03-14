@@ -1,0 +1,30 @@
+#   Makefile for MASM Icons
+#   Copyright (c) 2023 Alexey Ivanov
+
+#   nmake /f mkMasm.gmk            Will build Icons.exe
+#   nmake /f mkMasm.gmk /DDEBUG    Will build the debug version of Icons.exe
+#
+#   INCLUDEPATH specifies path to include files (win32.inc)
+
+NAME = Icons
+EXE  = $(NAME).exe
+OBJS = $(NAME).obj
+LIBS = kernel32.lib user32.lib gdi32.lib
+VERSION = 2.1
+
+!ifdef $d(DEBUG)
+MASMDEBUG=/zi
+LINKDEBUG=/verbose /debug:full
+!else
+MASMDEBUG=
+LINKDEBUG=/release
+!endif
+
+
+$(EXE): $(OBJS)
+  link /map:$(NAME).map /out:$(EXE) /noimplib /noexp /subsystem:windows,5.01 /version:$(VERSION) $(LINKDEBUG)  $(OBJS) $(LIBS)
+
+Icons.asm: extern.masm.asm
+
+.asm.obj:
+  ml /c /Cp /coff /WX /D__masm__ $(MASMDEBUG) /I$(INCLUDEPATH) $<

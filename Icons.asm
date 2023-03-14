@@ -274,7 +274,7 @@ DrawIcons:
         pop     edx               ; Восстановить регистры
         pop     ecx
 
-        add     ebx,  4           ; Переийти к следующей иконке
+        add     ebx,  4           ; Перейти к следующей иконке
         add     edx, X_INC
         loop    DrawIcons
 

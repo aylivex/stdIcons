@@ -505,7 +505,5 @@ finish:
         ret
 WndProc          endp
 ;-----------------------------------------------------------------------------
-public WndProc
-ends
 end start
 

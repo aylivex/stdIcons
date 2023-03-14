@@ -2,7 +2,7 @@
 ;
 .386                        ; Разрешить инструкции процессора 80386
 locals                      ; Разрешить использование локальных переменных
-jumps   
+jumps
 .model flat, STDCALL        ; Задать модель для 32битных программ
 include win32.inc           ; 32битные константы и структуры
 
@@ -59,7 +59,7 @@ extrn            UpdateWindow:PROC
 
 ;
 ; Для поддержки Unicode Win32 разделяет некоторые функции на Ansi и Unicode
-; 
+;
 CreateFontIndirect      equ <CreateFontIndirectA>
 CreateWindowEx          equ <CreateWindowExA>
 DefWindowProc           equ <DefWindowProcA>
@@ -93,7 +93,7 @@ MBInfo           db 'Стандартные иконки', 13, 10, 13, 10
 ALIGN 4
 
 ; Идентификаторы иконок
-IconNames        dd IDI_APPLICATION   
+IconNames        dd IDI_APPLICATION
                  dd IDI_ASTERISK
                  dd IDI_EXCLAMATION
                  dd IDI_HAND
@@ -137,7 +137,7 @@ hFont            dd ?
 hSysMenu         dd ?
 
 txtSize          TEXTSIZE <?>   ; Структура для получения размера текста
-             
+
 Font             LOGFONT <?>    ; Структура для создания шрифта
 
 
@@ -237,7 +237,7 @@ start:
         call    InsertMenu               ; Добавить новый пункт
 
         ; Запретить доступ к командам, которые не подходят для наших целей
-        push    L MF_GRAYED              
+        push    L MF_GRAYED
         push    L SC_RESTORE             ; Пункт "Восстановить"
         push    [hSysMenu]
         call    EnableMenuItem
@@ -276,7 +276,7 @@ msg_loop: ; Цикл обработки сообщений
 
         push    offset msg
         call    DispatchMessage
-                                          
+
         jmp     msg_loop
 
 end_loop:
@@ -307,7 +307,7 @@ WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lp
         je      wmsyscommand
 
         jmp     defwndproc          ; Для необрабатываемых программой
-                                    ;  сообщений    
+                                    ;  сообщений
 
 wmpaint:        ; Перерисовка окна
         ; Начать операцию
@@ -324,7 +324,7 @@ DrawIcons:
         push    ecx               ; Сохранить регистры для дальнейшего
         push    edx               ;   использования
 
-        push    hIcons[ebx]       ; Идентификатор иконки 
+        push    hIcons[ebx]       ; Идентификатор иконки
         push    L 10              ; y
         push    edx               ; x
         push    [theDC]           ; Контекст устройства
@@ -334,13 +334,13 @@ DrawIcons:
         pop     ecx
 
         add     ebx,  4           ; Переийти к следующей иконке
-        add     edx, X_INC           
+        add     edx, X_INC
         loop    DrawIcons
 
         ; Нарисовать надписи
 
         push    COLOR_BTNFACE     ; Сделать фоновый цвет для шрифта таким
-        call    GetSysColor       ;  же, как и цвет формы      
+        call    GetSysColor       ;  же, как и цвет формы
 
         push    eax
         push    [theDC]
@@ -383,7 +383,7 @@ IconText:
         pop     ecx
 
         add     ebx, 4            ; Перейти к следующей иконке
-        add     edx, X_INC           
+        add     edx, X_INC
         loop    IconText
 
         ; Восстановить исходный шрифт в контексте
@@ -402,7 +402,7 @@ IconText:
 wmcreate:       ; Действия при создании окна
         ; Загрузить иконки (получить идентификаторы)
         mov     ecx, 6            ; Количество иконок
-        mov     ebx, 0            ; Индекс 
+        mov     ebx, 0            ; Индекс
 CreateIcon:
         push    ecx               ; Сохранить регистр
 
@@ -455,11 +455,11 @@ wmsyscommand:
 
         ; Выбрана команда "Восстановить"
         push    L MF_GRAYED       ; Сделать ее недоступной
-        push    L SC_RESTORE      
+        push    L SC_RESTORE
         push    [hSysMenu]
         call    EnableMenuItem
 
-        push    L MF_ENABLED      ; Но сделать доступной 
+        push    L MF_ENABLED      ; Но сделать доступной
         push    L SC_MINIMIZE     ;  команду "Свернуть"
         push    [hSysMenu]
         call    EnableMenuItem
@@ -467,7 +467,7 @@ wmsyscommand:
         jmp     defwndproc        ; Вызвать стандартный обработчик
 
 scminimize:     ; Выбрана команда "Свернуть"
-        push    L MF_ENABLED      ; Сделать доступной 
+        push    L MF_ENABLED      ; Сделать доступной
         push    L SC_RESTORE      ;  команду "Восстановить"
         push    [hSysMenu]
         call    EnableMenuItem
@@ -481,7 +481,7 @@ scminimize:     ; Выбрана команда "Свернуть"
 
 scabout:        ; Выбрана команда "О Программе"
         push    MB_OK OR MB_ICONASTERISK ; Вывести окно сообщения
-        push    offset MenuCaption + 1 
+        push    offset MenuCaption + 1
         push    offset MBInfo
         push    [newhwnd]
         call    MessageBox

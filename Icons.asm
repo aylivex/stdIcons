@@ -39,6 +39,8 @@ wc               WNDCLASS    <?> ; Класс окна
 
 hInst            dd 0            ; Идентификатор процесса
 
+.const
+
 szTitleName      db 'Стандартные иконки', 0   ; Заголовок окна
 szClassName      db 'SHOWICONS32', 0          ; Имя окнонного класса
 MenuCaption      db '&О Программе', 0         ; Название пункта меню

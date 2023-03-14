@@ -1,8 +1,8 @@
-#   Make file for Icons.
-#   Copyright (C) 1998 by Caravan of Love
+#   Makefile for Icons
+#   Copyright (c) 1998-2023 Alexey Ivanov
 
-#       make -B                 Will build wap32.exe
-#       make -B -DDEBUG         Will build the debug version of wap32.exe
+#       make -B                 Will build Icons.exe
+#       make -B -DDEBUG         Will build the debug version of Icons.exe
 
 NAME = Icons
 EXE  = $(NAME).exe

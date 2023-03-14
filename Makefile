@@ -5,6 +5,7 @@
 #       make -B -DDEBUG         Will build the debug version of wap32.exe
 
 NAME = Icons
+EXE  = $(NAME).exe
 OBJS = $(NAME).obj
 DEF  = $(NAME).def
 
@@ -19,8 +20,8 @@ LINKDEBUG=
 IMPORT=import32
 
 
-$(NAME).EXE: $(OBJS) $(DEF)
-  tlink32 /Tpe /aa /c $(LINKDEBUG) $(OBJS),$(NAME),, $(IMPORT), $(DEF)
+$(EXE): $(OBJS) $(DEF)
+  tlink32 /Tpe /aa /c $(LINKDEBUG) $(LIBPATH) $(OBJS),$(EXE),, $(IMPORT), $(DEF)
 
 .asm.obj:
-   tasm32 $(TASMDEBUG) /ml $&.asm
+   tasm32 $(TASMDEBUG) $(INCLUDE) /ml $&.asm

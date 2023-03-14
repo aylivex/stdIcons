@@ -427,7 +427,7 @@ CreateIcon:
         mov     [Font.lfHeight], 14
         mov     [Font.lfOrientation], 900
         mov     [Font.lfEscapement], 900
-        mov     [Font.lfWeight], FW_BOLD
+        mov     [Font.lfWeight], 700 ; FW_BOLD
         mov     [Font.lfCharSet], DEFAULT_CHARSET
 
         lea     edi, Font.lfFaceName ; Копируем имя шрифта

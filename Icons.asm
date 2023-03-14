@@ -1,29 +1,29 @@
-.386                        ; Разрешить инструкции процессора 80386
-locals                      ; Разрешить использование локальных переменных
+.386                        ; ╨рчЁх°шЄ№ шэёЄЁєъЎшш яЁюЎхёёюЁр 80386
+locals                      ; ╨рчЁх°шЄ№ шёяюы№чютрэшх ыюъры№э√ї яхЁхьхээ√ї
 jumps   
-.model flat, STDCALL        ; Задать модель для 32битных программ
-include win32.inc           ; 32битные константы и структуры
+.model flat, STDCALL        ; ╟рфрЄ№ ьюфхы№ фы  32сшЄэ√ї яЁюуЁрьь
+include win32.inc           ; 32сшЄэ√х ъюэёЄрэЄ√ ш ёЄЁєъЄєЁ√
 
-L equ <LARGE>               ; Указатель типа
+L equ <LARGE>               ; ╙ърчрЄхы№ Єшяр
 
-; Тип окна
+; ╥шя юъэр
 WndStyle = WS_OVERLAPPED OR WS_CAPTION OR WS_BORDER OR WS_SYSMENU OR WS_MINIMIZEBOX
 WndStyleEx = WS_EX_DLGMODALFRAME OR WS_EX_CLIENTEDGE
 
-; Размер окна
+; ╨рчьхЁ юъэр
 WND_X_SIZE = 300
 WND_Y_SIZE = 138
 X_INC = 48
 
-SC_ABOUT = 1                ; Идентификатор команды в меню
+SC_ABOUT = 1                ; ╚фхэЄшЇшърЄюЁ ъюьрэф√ т ьхэ■
 
-TSIZE STRUC                 ; Структура для получения размеров текста
+TSIZE STRUC                 ; ╤ЄЁєъЄєЁр фы  яюыєўхэш  ЁрчьхЁют ЄхъёЄр
   cx dd ?
   cy dd ?
 TSIZE ENDS
 
 ;
-; Определяем внешние функции, которыми мы будем пользоваться
+; ╬яЁхфхы хь тэх°эшх ЇєэъЎшш, ъюЄюЁ√ьш ь√ сєфхь яюы№чютрЄ№ё 
 ;
 extrn            BeginPaint:PROC
 extrn            CreateFontIndirectA:PROC
@@ -56,7 +56,7 @@ extrn            TranslateMessage:PROC
 extrn            UpdateWindow:PROC
 
 ;
-; Для поддержки Unicode Win32 разделяет некоторые функции на Ansi и Unicode
+; ─ы  яюффхЁцъш Unicode Win32 Ёрчфхы хЄ эхъюЄюЁ√х ЇєэъЎшш эр Ansi ш Unicode
 ; 
 CreateFontIndirect      equ <CreateFontIndirectA>
 CreateWindowEx          equ <CreateWindowExA>
@@ -72,28 +72,28 @@ MessageBox              equ <MessageBoxA>
 RegisterClass           equ <RegisterClassA>
 TextOut                 equ <TextOutA>
 
-.data            ; Инициализированные данные
-; Строка, содержащая сообшение об авторских правах
+.data            ; ╚эшЎшрышчшЁютрээ√х фрээ√х
+; ╤ЄЁюър, ёюфхЁцр∙р  ёююс°хэшх юс ртЄюЁёъшї яЁртрї
 copyright        db '(C) Copyright 1998 Caravan of Love',0
 
-newhwnd          dd 0            ; Идентификатор окна
-lppaint          PAINTSTRUCT <?> ; Структура для рисования окна
-msg              MSGSTRUCT   <?> ; Структура для получения сообщений
-wc               WNDCLASS    <?> ; Класс окна
+newhwnd          dd 0            ; ╚фхэЄшЇшърЄюЁ юъэр
+lppaint          PAINTSTRUCT <?> ; ╤ЄЁєъЄєЁр фы  Ёшёютрэш  юъэр
+msg              MSGSTRUCT   <?> ; ╤ЄЁєъЄєЁр фы  яюыєўхэш  ёююс∙хэшщ
+wc               WNDCLASS    <?> ; ╩ырёё юъэр
 
-hInst            dd 0            ; Идентификатор процесса
+hInst            dd 0            ; ╚фхэЄшЇшърЄюЁ яЁюЎхёёр
 
-szTitleName      db '╤ЄрэфрЁЄэ√х шъюэъш', 0   ; Заголовок окна
-szClassName      db 'SHOWICONS32', 0          ; Имя окнонного класса
-MenuCaption      db '&╬ ╧ЁюуЁрььх', 0         ; Название пункта меню
-                                 ; Строка информации
+szTitleName      db '╤ЄрэфрЁЄэ√х шъюэъш', 0   ; ╟руюыютюъ юъэр
+szClassName      db 'SHOWICONS32', 0          ; ╚ь  юъэюээюую ъырёёр
+MenuCaption      db '&╬ ╧ЁюуЁрььх', 0         ; ═рчтрэшх яєэъЄр ьхэ■
+                                 ; ╤ЄЁюър шэЇюЁьрЎшш
 MBInfo           db '╤ЄрэфрЁЄэ√х шъюэъш', 13, 10, 13, 10
 		     db '┬хЁёш  2.0 юЄ 19 ёхэЄ сЁ  1998 у.', 13, 10
                  db 'й1998, Caravan of Loveо', 0
 
 ALIGN 4
 
-; Идентификаторы иконок
+; ╚фхэЄшЇшърЄюЁ√ шъюэюъ
 IconNames        dd IDI_APPLICATION   
                  dd IDI_ASTERISK
                  dd IDI_EXCLAMATION
@@ -101,7 +101,7 @@ IconNames        dd IDI_APPLICATION
                  dd IDI_QUESTION
                  dd IDI_WINLOGO
 
-; Названия иконок для вывода надписей
+; ═рчтрэш  шъюэюъ фы  т√тюфр эрфяшёхщ
 Icon1            db 'IDI_APPLICATION', 0
 Icon2            db 'IDI_ASTERISK', 0
 Icon3            db 'IDI_EXCLAMATION', 0
@@ -113,7 +113,7 @@ FaceName         db 'Arial', 0
 
 ALIGN 4
 
-; Длины соответсвующих названий иконок
+; ─ышэ√ ёююЄтхЄётє■∙шї эрчтрэшщ шъюэюъ
 IconLen          dd 15
                  dd 12
                  dd 15
@@ -121,7 +121,7 @@ IconLen          dd 15
                  dd 12
                  dd 11
 
-; Смещения названий иконок
+; ╤ьх∙хэш  эрчтрэшщ шъюэюъ
 IconName         dd offset Icon1
                  dd offset Icon2
                  dd offset Icon3
@@ -129,49 +129,49 @@ IconName         dd offset Icon1
                  dd offset Icon5
                  dd offset Icon6
 
-.data?           ; Неинициализированные данные
-WndX             dd ?           ; Положение окна на экране
+.data?           ; ═хшэшЎшрышчшЁютрээ√х фрээ√х
+WndX             dd ?           ; ╧юыюцхэшх юъэр эр ¤ъЁрэх
 WndY             dd ?
 
-hIcons           dd 6 dup (?)   ; Идентификаторы загруженных иконок
+hIcons           dd 6 dup (?)   ; ╚фхэЄшЇшърЄюЁ√ чруЁєцхээ√ї шъюэюъ
 hFont            dd ?
 hSysMenu         dd ?
 
-TextSize         TSIZE <?>      ; Структура для получения размера текста
+TextSize         TSIZE <?>      ; ╤ЄЁєъЄєЁр фы  яюыєўхэш  ЁрчьхЁр ЄхъёЄр
              
-Font             LOGFONT <?>    ; Структура для создания шрифта
+Font             LOGFONT <?>    ; ╤ЄЁєъЄєЁр фы  ёючфрэш  °ЁшЇЄр
 
 
-.code            ; Код программы
+.code            ; ╩юф яЁюуЁрьь√
 ;-----------------------------------------------------------------------------
 ;
-; Сюда нам передается управление от загрузчика.
+; ╤■фр эрь яхЁхфрхЄё  єяЁртыхэшх юЄ чруЁєчўшър.
 ;
 start:
 
         push    L 0
-        call    GetModuleHandle         ; get hmod (in eax) (идентификатор модуля)
-        mov     [hInst], eax            ; hInstance - то же, что и HMODULE
-                                        ; в мире Win32
+        call    GetModuleHandle         ; get hmod (in eax) (шфхэЄшЇшърЄюЁ ьюфєы )
+        mov     [hInst], eax            ; hInstance - Єю цх, ўЄю ш HMODULE
+                                        ; т ьшЁх Win32
 
 ;
-; Инициализировать структуру WndClass (окнонного класса)
+; ╚эшЎшрышчшЁютрЄ№ ёЄЁєъЄєЁє WndClass (юъэюээюую ъырёёр)
 ;
         mov     [wc.clsStyle], CS_HREDRAW + CS_VREDRAW + CS_GLOBALCLASS
-        mov     [wc.clsLpfnWndProc], offset WndProc ; оконная процедура
+        mov     [wc.clsLpfnWndProc], offset WndProc ; юъюээр  яЁюЎхфєЁр
         mov     [wc.clsCbClsExtra], 0
         mov     [wc.clsCbWndExtra], 0
 
         mov     eax, [hInst]
         mov     [wc.clsHInstance], eax
 
-        ; Загрузить иконку для приложения
+        ; ╟руЁєчшЄ№ шъюэъє фы  яЁшыюцхэш 
         push    L IDI_APPLICATION
         push    L 0
         call    LoadIcon
         mov     [wc.clsHIcon], eax
 
-        ; Загрузить курсор для приложения
+        ; ╟руЁєчшЄ№ ъєЁёюЁ фы  яЁшыюцхэш 
         push    L IDC_ARROW
         push    L 0
         call    LoadCursor
@@ -182,11 +182,11 @@ start:
         mov     dword ptr [wc.clsLpszClassName], offset szClassName
 
         push    offset wc
-        call    RegisterClass           ; Зарегистрировать оконный класс
+        call    RegisterClass           ; ╟рЁхушёЄЁшЁютрЄ№ юъюээ√щ ъырёё
 
 ;
-; Получить размер экрана и вычислить координаты окна на экране, чтобы
-; оно было расположено по ценру экрана
+; ╧юыєўшЄ№ ЁрчьхЁ ¤ъЁрэр ш т√ўшёышЄ№ ъююЁфшэрЄ√ юъэр эр ¤ъЁрэх, ўЄюс√
+; юэю с√ыю Ёрёяюыюцхэю яю ЎхэЁє ¤ъЁрэр
 ;
         push    L SM_CXSCREEN
         call    GetSystemMetrics
@@ -201,7 +201,7 @@ start:
         mov     WndY, eax
 
 ;
-; Создать окно
+; ╤ючфрЄ№ юъэю
 ;
         push    L 0                      ; lpParam
         push    [hInst]                  ; hInstance
@@ -218,16 +218,16 @@ start:
 
         call    CreateWindowEx
 
-        mov     [newhwnd], eax           ; Запомнить идентификатор окна
+        mov     [newhwnd], eax           ; ╟ряюьэшЄ№ шфхэЄшЇшърЄюЁ юъэр
 
 ;**************************************************************************
-;*****                      Редактируем системное меню                *****
+;*****                      ╨хфръЄшЁєхь ёшёЄхьэюх ьхэ■                *****
 ;**************************************************************************
 
-        ; Добавить команду в системное меню
+        ; ─юсртшЄ№ ъюьрэфє т ёшёЄхьэюх ьхэ■
         push    L 0                      ; bRevert (False)
         push    [newhwnd]                ; hWnd
-        call    GetSystemMenu            ; Получить идентификатор
+        call    GetSystemMenu            ; ╧юыєўшЄ№ шфхэЄшЇшърЄюЁ
         mov     [hSysMenu], eax
 
         push    offset MenuCaption       ; lpNewItem
@@ -235,34 +235,34 @@ start:
         push    L MF_BYPOSITION          ; uFlags
         push    L -1                     ; uPosition
         push    eax                      ; hMenu
-        call    InsertMenu               ; Добавить новый пункт
+        call    InsertMenu               ; ─юсртшЄ№ эют√щ яєэъЄ
 
-        ; Запретить доступ к командам, которые не подходят для наших целей
+        ; ╟ряЁхЄшЄ№ фюёЄєя ъ ъюьрэфрь, ъюЄюЁ√х эх яюфїюф Є фы  эр°шї Ўхыхщ
         push    L MF_GRAYED              
-        push    L SC_RESTORE             ; Пункт "Восстановить"
+        push    L SC_RESTORE             ; ╧єэъЄ "┬юёёЄрэютшЄ№"
         push    [hSysMenu]
         call    EnableMenuItem
 
         push    L MF_GRAYED
-        push    L SC_SIZE                ; Пункт "Размер"
+        push    L SC_SIZE                ; ╧єэъЄ "╨рчьхЁ"
         push    [hSysMenu]
         call    EnableMenuItem
 
         push    L MF_GRAYED
-        push    L SC_MAXIMIZE            ; Пункт "Развернуть"
+        push    L SC_MAXIMIZE            ; ╧єэъЄ "╨рчтхЁэєЄ№"
         push    [hSysMenu]
         call    EnableMenuItem
 
-        ; Показать окно
+        ; ╧юърчрЄ№ юъэю
         push    L SW_SHOWNORMAL
         push    [newhwnd]
         call    ShowWindow
 
-        ; Нарисовать содержимое в окне
+        ; ═рЁшёютрЄ№ ёюфхЁцшьюх т юъэх
         push    [newhwnd]
         call    UpdateWindow
 
-msg_loop: ; Цикл обработки сообщений
+msg_loop: ; ╓шъы юсЁрсюЄъш ёююс∙хэшщ
         push    L 0
         push    L 0
         push    L 0
@@ -282,23 +282,23 @@ msg_loop: ; Цикл обработки сообщений
 
 end_loop:
         push    [msg.msWPARAM]
-        call    ExitProcess       ; Завершить процесс
+        call    ExitProcess       ; ╟ртхЁ°шЄ№ яЁюЎхёё
 
-        ; Мы никогда не придем сюда
+        ; ╠√ эшъюуфр эх яЁшфхь ё■фр
 
 ;-----------------------------------------------------------------------------
 WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lparam:DWORD
 ;
-; ВНИМАНИЕ: Win32 требует, чтобы EBX, EDI и ESI были сохранены!  Мы удовлет-
-; воряем этому условию с помощью перечисления этих регистров после директивы
-; uses при описании процедуры. Это делается, чтобы Ассемблер автоматически
-; сохранил эти регистры для нас
+; ┬═╚╠└═╚┼: Win32 ЄЁхсєхЄ, ўЄюс√ EBX, EDI ш ESI с√ыш ёюїЁрэхэ√!  ╠√ єфютыхЄ-
+; тюЁ хь ¤Єюьє єёыютш■ ё яюью∙№■ яхЁхўшёыхэш  ¤Єшї ЁхушёЄЁют яюёых фшЁхъЄшт√
+; uses яЁш юяшёрэшш яЁюЎхфєЁ√. ▌Єю фхырхЄё , ўЄюс√ └ёёхьсыхЁ ртЄюьрЄшўхёъш
+; ёюїЁрэшы ¤Єш ЁхушёЄЁ√ фы  эрё
 ;
-        LOCAL theDC: DWORD          ; Локальная переменная, содержащая
-                                    ;   контекст устройства
+        LOCAL theDC: DWORD          ; ╦юъры№эр  яхЁхьхээр , ёюфхЁцр∙р 
+                                    ;   ъюэЄхъёЄ єёЄЁющёЄтр
         LOCAL oldFont: DWORD
 
-        cmp     [wmsg], WM_DESTROY  ; Обрабатываемые сообщения
+        cmp     [wmsg], WM_DESTROY  ; ╬сЁрсрЄ√трхь√х ёююс∙хэш 
         je      wmdestroy
         cmp     [wmsg], WM_CREATE
         je      wmcreate
@@ -307,118 +307,118 @@ WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lp
         cmp     [wmsg], WM_SYSCOMMAND
         je      wmsyscommand
 
-        jmp     defwndproc          ; Для необрабатываемых программой
-                                    ;  сообщений    
+        jmp     defwndproc          ; ─ы  эхюсЁрсрЄ√трхь√ї яЁюуЁрььющ
+                                    ;  ёююс∙хэшщ    
 
-wmpaint:        ; Перерисовка окна
-        ; Начать операцию
+wmpaint:        ; ╧хЁхЁшёютър юъэр
+        ; ═рўрЄ№ юяхЁрЎш■
         push    offset lppaint
         push    [hwnd]
         call    BeginPaint
         mov     [theDC], eax
 
-        ; Нарисовать иконки
-        mov     ebx, 0            ; Индекс иконки (смещение идентификатора)
-        mov     edx, 18           ; Горизонтальная координата иконки
-        mov     ecx, 6            ; Количество иконок
+        ; ═рЁшёютрЄ№ шъюэъш
+        mov     ebx, 0            ; ╚эфхъё шъюэъш (ёьх∙хэшх шфхэЄшЇшърЄюЁр)
+        mov     edx, 18           ; ├юЁшчюэЄры№эр  ъююЁфшэрЄр шъюэъш
+        mov     ecx, 6            ; ╩юышўхёЄтю шъюэюъ
 DrawIcons:
-        push    ecx               ; Сохранить регистры для дальнейшего
-        push    edx               ;   использования
+        push    ecx               ; ╤юїЁрэшЄ№ ЁхушёЄЁ√ фы  фры№эхщ°хую
+        push    edx               ;   шёяюы№чютрэш 
 
-        push    hIcons[ebx]       ; Идентификатор иконки 
+        push    hIcons[ebx]       ; ╚фхэЄшЇшърЄюЁ шъюэъш 
         push    L 10              ; y
         push    edx               ; x
-        push    [theDC]           ; Контекст устройства
-        call    DrawIcon          ; Нарисовать иконку
+        push    [theDC]           ; ╩юэЄхъёЄ єёЄЁющёЄтр
+        call    DrawIcon          ; ═рЁшёютрЄ№ шъюэъє
 
-        pop     edx               ; Восстановить регистры
+        pop     edx               ; ┬юёёЄрэютшЄ№ ЁхушёЄЁ√
         pop     ecx
 
-        add     ebx,  4           ; Переийти к следующей иконке
+        add     ebx,  4           ; ╧хЁхшщЄш ъ ёыхфє■∙хщ шъюэъх
         add     edx, X_INC           
         loop    DrawIcons
 
-        ; Нарисовать надписи
+        ; ═рЁшёютрЄ№ эрфяшёш
 
-        push    COLOR_BTNFACE     ; Сделать фоновый цвет для шрифта таким
-        call    GetSysColor       ;  же, как и цвет формы      
+        push    COLOR_BTNFACE     ; ╤фхырЄ№ Їюэют√щ ЎтхЄ фы  °ЁшЇЄр Єръшь
+        call    GetSysColor       ;  цх, ъръ ш ЎтхЄ ЇюЁь√      
 
         push    eax
         push    [theDC]
         call    SetBkColor
 
-        push    [hFont]           ; Выбрать созданный шрифт в контекст
+        push    [hFont]           ; ┬√сЁрЄ№ ёючфрээ√щ °ЁшЇЄ т ъюэЄхъёЄ
         push    [theDC]
         call    SelectObject
-        mov     [oldFont], eax    ; Сохранить старый шрифт
+        mov     [oldFont], eax    ; ╤юїЁрэшЄ№ ёЄрЁ√щ °ЁшЇЄ
 
-        mov     ecx, 6            ; Количество иконок
-        mov     edx, 2            ; Горизонтальная координата вывода текста
-        mov     ebx, 0            ; Индекс в массиве
+        mov     ecx, 6            ; ╩юышўхёЄтю шъюэюъ
+        mov     edx, 2            ; ├юЁшчюэЄры№эр  ъююЁфшэрЄр т√тюфр ЄхъёЄр
+        mov     ebx, 0            ; ╚эфхъё т ьрёёштх
 IconText:
-        push    ecx               ; Сохранить важные регистры
+        push    ecx               ; ╤юїЁрэшЄ№ трцэ√х ЁхушёЄЁ√
         push    edx
         push    edx
 
-        ; Получить размер шрифта
+        ; ╧юыєўшЄ№ ЁрчьхЁ °ЁшЇЄр
         push    offset TextSize
-        push    IconLen[ebx]      ; Длина строки
-        push    IconName[ebx]     ; Сама строка
+        push    IconLen[ebx]      ; ─ышэр ёЄЁюъш
+        push    IconName[ebx]     ; ╤рьр ёЄЁюър
         push    [theDC]
         call    GetTextExtentPoint
 
-        pop     edx               ; Восстановить координату по X
+        pop     edx               ; ┬юёёЄрэютшЄ№ ъююЁфшэрЄє яю X
 
-        mov     eax, 3            ; Учесть размер текста в координате Y
+        mov     eax, 3            ; ╙ўхёЄ№ ЁрчьхЁ ЄхъёЄр т ъююЁфшэрЄх Y
         add     eax, dword ptr TextSize
 
-        ; Вывести надпись
-        push    IconLen[ebx]      ; Длина строки
-        push    IconName[ebx]     ; Строка
+        ; ┬√тхёЄш эрфяшё№
+        push    IconLen[ebx]      ; ─ышэр ёЄЁюъш
+        push    IconName[ebx]     ; ╤ЄЁюър
         push    eax               ; y
         push    edx               ; x
-        push    [theDC]           ; Контекст устройства
+        push    [theDC]           ; ╩юэЄхъёЄ єёЄЁющёЄтр
         call    TextOut
 
-        pop     edx               ; Восстановить регистры
+        pop     edx               ; ┬юёёЄрэютшЄ№ ЁхушёЄЁ√
         pop     ecx
 
-        add     ebx, 4            ; Перейти к следующей иконке
+        add     ebx, 4            ; ╧хЁхщЄш ъ ёыхфє■∙хщ шъюэъх
         add     edx, X_INC           
         loop    IconText
 
-        ; Восстановить исходный шрифт в контексте
+        ; ┬юёёЄрэютшЄ№ шёїюфэ√щ °ЁшЇЄ т ъюэЄхъёЄх
         push    [oldFont]
         push    [theDC]
         call    SelectObject
 
-        ; Завершить операцию
+        ; ╟ртхЁ°шЄ№ юяхЁрЎш■
         push    offset lppaint
         push    [hwnd]
         call    EndPaint
 
-        mov     eax, 0            ; Результат обработки сообщения
+        mov     eax, 0            ; ╨хчєы№ЄрЄ юсЁрсюЄъш ёююс∙хэш 
         jmp     finish
 
-wmcreate:       ; Действия при создании окна
-        ; Загрузить иконки (получить идентификаторы)
-        mov     ecx, 6            ; Количество иконок
-        mov     ebx, 0            ; Индекс 
+wmcreate:       ; ─хщёЄтш  яЁш ёючфрэшш юъэр
+        ; ╟руЁєчшЄ№ шъюэъш (яюыєўшЄ№ шфхэЄшЇшърЄюЁ√)
+        mov     ecx, 6            ; ╩юышўхёЄтю шъюэюъ
+        mov     ebx, 0            ; ╚эфхъё 
 CreateIcon:
-        push    ecx               ; Сохранить регистр
+        push    ecx               ; ╤юїЁрэшЄ№ ЁхушёЄЁ
 
-        push    IconNames[ebx]    ; Идентификатор ресурса для иконки
-        push    L 0               ; Идентификатор модуля
-        call    LoadIcon          ; Загрузить иконку
-        mov     hIcons[ebx], eax  ; Сохранить полученный идентификатор
+        push    IconNames[ebx]    ; ╚фхэЄшЇшърЄюЁ ЁхёєЁёр фы  шъюэъш
+        push    L 0               ; ╚фхэЄшЇшърЄюЁ ьюфєы 
+        call    LoadIcon          ; ╟руЁєчшЄ№ шъюэъє
+        mov     hIcons[ebx], eax  ; ╤юїЁрэшЄ№ яюыєўхээ√щ шфхэЄшЇшърЄюЁ
 
-        pop     ecx               ; Восстановить регистр
+        pop     ecx               ; ┬юёёЄрэютшЄ№ ЁхушёЄЁ
 
-        add     ebx, 4            ; Следующий индекс
+        add     ebx, 4            ; ╤ыхфє■∙шщ шэфхъё
         loop    CreateIcon
 
-        ; Создаем новый шрифт
-        mov     edi, offset Font  ; Обнулить содержимое
+        ; ╤ючфрхь эют√щ °ЁшЇЄ
+        mov     edi, offset Font  ; ╬сэєышЄ№ ёюфхЁцшьюх
         mov     ecx, TYPE Font
         cld
         xor     al, al
@@ -430,7 +430,7 @@ CreateIcon:
         mov     [Font.lfWeight], FW_BOLD
         mov     [Font.lfCharSet], DEFAULT_CHARSET
 
-        lea     edi, Font.lfFaceName ; Копируем имя шрифта
+        lea     edi, Font.lfFaceName ; ╩юяшЁєхь шь  °ЁшЇЄр
         lea     esi, FaceName
         mov     ecx, 7
         rep     movsb
@@ -440,7 +440,7 @@ CreateIcon:
 
         mov     [hFont], eax
 
-        mov     eax, 0            ; Результат обработки сообщения
+        mov     eax, 0            ; ╨хчєы№ЄрЄ юсЁрсюЄъш ёююс∙хэш 
         jmp     finish
 
 wmsyscommand:
@@ -451,37 +451,37 @@ wmsyscommand:
         je      scminimize
 
         cmp     [wparam], SC_RESTORE
-        jne     defwndproc        ; Остальные команды системного меню
-                                  ;  мы не обрабатываем по-своему
+        jne     defwndproc        ; ╬ёЄры№э√х ъюьрэф√ ёшёЄхьэюую ьхэ■
+                                  ;  ь√ эх юсЁрсрЄ√трхь яю-ётюхьє
 
-        ; Выбрана команда "Восстановить"
-        push    L MF_GRAYED       ; Сделать ее недоступной
+        ; ┬√сЁрэр ъюьрэфр "┬юёёЄрэютшЄ№"
+        push    L MF_GRAYED       ; ╤фхырЄ№ хх эхфюёЄєяэющ
         push    L SC_RESTORE      
         push    [hSysMenu]
         call    EnableMenuItem
 
-        push    L MF_ENABLED      ; Но сделать доступной 
-        push    L SC_MINIMIZE     ;  команду "Свернуть"
+        push    L MF_ENABLED      ; ═ю ёфхырЄ№ фюёЄєяэющ 
+        push    L SC_MINIMIZE     ;  ъюьрэфє "╤тхЁэєЄ№"
         push    [hSysMenu]
         call    EnableMenuItem
 
-        jmp     defwndproc        ; Вызвать стандартный обработчик
+        jmp     defwndproc        ; ┬√чтрЄ№ ёЄрэфрЁЄэ√щ юсЁрсюЄўшъ
 
-scminimize:     ; Выбрана команда "Свернуть"
-        push    L MF_ENABLED      ; Сделать доступной 
-        push    L SC_RESTORE      ;  команду "Восстановить"
+scminimize:     ; ┬√сЁрэр ъюьрэфр "╤тхЁэєЄ№"
+        push    L MF_ENABLED      ; ╤фхырЄ№ фюёЄєяэющ 
+        push    L SC_RESTORE      ;  ъюьрэфє "┬юёёЄрэютшЄ№"
         push    [hSysMenu]
         call    EnableMenuItem
 
-        push    L MF_GRAYED       ; Сделать недоступной
-        push    L SC_MINIMIZE     ;  команду "Свернуть"
+        push    L MF_GRAYED       ; ╤фхырЄ№ эхфюёЄєяэющ
+        push    L SC_MINIMIZE     ;  ъюьрэфє "╤тхЁэєЄ№"
         push    [hSysMenu]
         call    EnableMenuItem
 
-        jmp     defwndproc        ; Вызвать стандартный обработчик
+        jmp     defwndproc        ; ┬√чтрЄ№ ёЄрэфрЁЄэ√щ юсЁрсюЄўшъ
 
-scabout:        ; Выбрана команда "О Программе"
-        push    MB_OK OR MB_ICONASTERISK ; Вывести окно сообщения
+scabout:        ; ┬√сЁрэр ъюьрэфр "╬ ╧ЁюуЁрььх"
+        push    MB_OK OR MB_ICONASTERISK ; ┬√тхёЄш юъэю ёююс∙хэш 
         push    offset MenuCaption + 1 
         push    offset MBInfo
         push    [newhwnd]
@@ -490,15 +490,15 @@ scabout:        ; Выбрана команда "О Программе"
         mov     eax, 0
         jmp     finish
 
-defwndproc:     ; Необрабатываемые сообщения
+defwndproc:     ; ═хюсЁрсрЄ√трхь√х ёююс∙хэш 
         push    [lparam]
         push    [wparam]
         push    [wmsg]
         push    [hwnd]
-        call    DefWindowProc     ; Вызвать оконную процедру по умолчанию
+        call    DefWindowProc     ; ┬√чтрЄ№ юъюээє■ яЁюЎхфЁє яю єьюыўрэш■
         jmp     finish
 
-wmdestroy:      ; Разрушение окна и завершение работы
+wmdestroy:      ; ╨рчЁє°хэшх юъэр ш чртхЁ°хэшх ЁрсюЄ√
         push    L 0
         call    PostQuitMessage
 

@@ -55,23 +55,6 @@ extrn            TextOutA:PROC
 extrn            TranslateMessage:PROC
 extrn            UpdateWindow:PROC
 
-;
-; Для поддержки Unicode Win32 разделяет некоторые функции на Ansi и Unicode
-;
-CreateFontIndirect      equ <CreateFontIndirectA>
-CreateWindowEx          equ <CreateWindowExA>
-DefWindowProc           equ <DefWindowProcA>
-DispatchMessage         equ <DispatchMessageA>
-GetMessage              equ <GetMessageA>
-GetModuleHandle         equ <GetModuleHandleA>
-GetTextExtentPoint      equ <GetTextExtentPoint32A>
-InsertMenu              equ <InsertMenuA>
-LoadCursor              equ <LoadCursorA>
-LoadIcon                equ <LoadIconA>
-MessageBox              equ <MessageBoxA>
-RegisterClass           equ <RegisterClassA>
-TextOut                 equ <TextOutA>
-
 .data            ; Инициализированные данные
 newhwnd          dd 0            ; Идентификатор окна
 lppaint          PAINTSTRUCT <?> ; Структура для рисования окна
@@ -147,7 +130,7 @@ Font             LOGFONT <?>    ; Структура для создания ш�
 start:
 
         push    L 0
-        call    GetModuleHandle         ; get hmod (in eax) (идентификатор модуля)
+        call    GetModuleHandleA        ; get hmod (in eax) (идентификатор модуля)
         mov     [hInst], eax            ; hInstance - то же, что и HMODULE
                                         ; в мире Win32
 
@@ -165,13 +148,13 @@ start:
         ; Загрузить иконку для приложения
         push    L IDI_APPLICATION
         push    L 0
-        call    LoadIcon
+        call    LoadIconA
         mov     [wc.clsHIcon], eax
 
         ; Загрузить курсор для приложения
         push    L IDC_ARROW
         push    L 0
-        call    LoadCursor
+        call    LoadCursorA
         mov     [wc.clsHCursor], eax
 
         mov     [wc.clsHbrBackground], COLOR_BTNFACE + 1
@@ -179,7 +162,7 @@ start:
         mov     dword ptr [wc.clsLpszClassName], offset szClassName
 
         push    offset wc
-        call    RegisterClass           ; Зарегистрировать оконный класс
+        call    RegisterClassA          ; Зарегистрировать оконный класс
 
 ;
 ; Получить размер экрана и вычислить координаты окна на экране, чтобы
@@ -213,7 +196,7 @@ start:
         push    offset szClassName       ; Class name
         push    L WndStyleEx             ; extra style
 
-        call    CreateWindowEx
+        call    CreateWindowExA
 
         mov     [newhwnd], eax           ; Запомнить идентификатор окна
 
@@ -232,7 +215,7 @@ start:
         push    L MF_BYPOSITION          ; uFlags
         push    L -1                     ; uPosition
         push    eax                      ; hMenu
-        call    InsertMenu               ; Добавить новый пункт
+        call    InsertMenuA              ; Добавить новый пункт
 
         ; Запретить доступ к командам, которые не подходят для наших целей
         push    L MF_GRAYED
@@ -264,7 +247,7 @@ msg_loop: ; Цикл обработки сообщений
         push    L 0
         push    L 0
         push    offset msg
-        call    GetMessage
+        call    GetMessageA
 
         cmp     ax, 0
         je      end_loop
@@ -273,7 +256,7 @@ msg_loop: ; Цикл обработки сообщений
         call    TranslateMessage
 
         push    offset msg
-        call    DispatchMessage
+        call    DispatchMessageA
 
         jmp     msg_loop
 
@@ -362,7 +345,7 @@ IconText:
         push    IconLen[ebx]      ; Длина строки
         push    IconName[ebx]     ; Сама строка
         push    [theDC]
-        call    GetTextExtentPoint
+        call    GetTextExtentPoint32A
 
         pop     edx               ; Восстановить координату по X
 
@@ -375,7 +358,7 @@ IconText:
         push    eax               ; y
         push    edx               ; x
         push    [theDC]           ; Контекст устройства
-        call    TextOut
+        call    TextOutA
 
         pop     edx               ; Восстановить регистры
         pop     ecx
@@ -406,7 +389,7 @@ CreateIcon:
 
         push    IconNames[ebx]    ; Идентификатор ресурса для иконки
         push    L 0               ; Идентификатор модуля
-        call    LoadIcon          ; Загрузить иконку
+        call    LoadIconA         ; Загрузить иконку
         mov     hIcons[ebx], eax  ; Сохранить полученный идентификатор
 
         pop     ecx               ; Восстановить регистр
@@ -433,7 +416,7 @@ CreateIcon:
         rep     movsb
 
         push    offset Font
-        call    CreateFontIndirect
+        call    CreateFontIndirectA
 
         mov     [hFont], eax
 
@@ -482,7 +465,7 @@ scabout:        ; Выбрана команда "О Программе"
         push    offset MenuCaption + 1
         push    offset MBInfo
         push    [newhwnd]
-        call    MessageBox
+        call    MessageBoxA
 
         mov     eax, 0
         jmp     finish
@@ -492,7 +475,7 @@ defwndproc:     ; Необрабатываемые сообщения
         push    [wparam]
         push    [wmsg]
         push    [hwnd]
-        call    DefWindowProc     ; Вызвать оконную процедру по умолчанию
+        call    DefWindowProcA    ; Вызвать оконную процедру по умолчанию
         jmp     finish
 
 wmdestroy:      ; Разрушение окна и завершение работы

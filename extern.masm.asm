@@ -4,9 +4,11 @@
 
 extrn            ExitProcess@4:PROC
 extrn            GetModuleHandleA@4:PROC
+extrn            MulDiv@12:PROC
 
 ExitProcess equ ExitProcess@4
 GetModuleHandleA equ GetModuleHandleA@4
+MulDiv equ MulDiv@12
 
 
 extrn            BeginPaint@8:PROC
@@ -37,6 +39,7 @@ DispatchMessageA equ DispatchMessageA@4
 DrawIcon equ DrawIcon@16
 EnableMenuItem equ EnableMenuItem@12
 EndPaint equ EndPaint@8
+
 GetMessageA equ GetMessageA@16
 GetSysColor equ GetSysColor@4
 GetSystemMenu equ GetSystemMenu@8
@@ -54,16 +57,22 @@ UpdateWindow equ UpdateWindow@4
 
 extrn            CreateFontIndirectA@4:PROC
 extrn            DeleteObject@4:PROC
+extrn            GetDeviceCaps@8:PROC
+extrn            GetDC@4:PROC
 extrn            GetStockObject@4:PROC
 extrn            GetTextExtentPoint32A@16:PROC
+extrn            ReleaseDC@8:PROC
 extrn            SelectObject@8:PROC
 extrn            SetBkColor@8:PROC
 extrn            TextOutA@20:PROC
 
 CreateFontIndirectA equ CreateFontIndirectA@4
 DeleteObject equ DeleteObject@4
+GetDeviceCaps equ GetDeviceCaps@8
+GetDC equ GetDC@4
 GetStockObject equ GetStockObject@4
 GetTextExtentPoint32A equ GetTextExtentPoint32A@16
+ReleaseDC equ ReleaseDC@8
 SelectObject equ SelectObject@8
 SetBkColor equ SetBkColor@8
 TextOutA equ TextOutA@20

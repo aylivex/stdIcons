@@ -97,6 +97,7 @@ WndY             dd ?
 hIcons           dd ICON_NUM dup (?)
                  ; Длина текста названий иконок
 IconTextWidth    dd ICON_NUM dup (?)
+IconTextHeight   dd ?
 
 BASE_FONT_SIZE = 14
 hFont            dd ?
@@ -292,28 +293,8 @@ CreateIcon:
         add     ebx, 4            ; Следующий индекс
         loop    CreateIcon
 
-        ; Создаем новый шрифт
-        mov     edi, offset Font  ; Обнулить содержимое
-        mov     ecx, TYPE Font
-        cld
-        xor     al, al
-        rep     stosb
-
-        mov     [Font.lfHeight], 14
-        mov     [Font.lfOrientation], 900
-        mov     [Font.lfEscapement], 900
-        mov     [Font.lfWeight], 700 ; FW_BOLD
-        mov     [Font.lfCharSet], DEFAULT_CHARSET
-
-        lea     edi, Font.lfFaceName ; Копируем имя шрифта
-        lea     esi, FaceName
-        mov     ecx, 7
-        rep     movsb
-
-        push    offset Font
-        call    CreateFontIndirectA
-
-        mov     [hFont], eax
+        mov     eax, [hwnd]
+        call    UpdateFont
 
         mov     eax, 0            ; Результат обработки сообщения
         jmp     finish
@@ -435,6 +416,84 @@ IconText:
 
         ret
 PaintWindow endp
+
+;-----------------------------------------------------------------------------
+; eax contains the window handle
+UpdateFont proc uses ebx edi esi
+        LOCAL   hWnd: DWORD
+        LOCAL   hDC: DWORD
+
+        mov     [hWnd], eax
+
+        push    eax
+        call    GetDC
+        mov     [hDC], eax
+
+        push    L 90              ; LOGPIXELSY
+        push    eax
+        call    GetDeviceCaps
+
+        push    L 72
+        push    eax
+        push    BASE_FONT_SIZE
+        call    MulDiv
+        neg     eax
+        mov     edx, eax
+
+        ; Создаем новый шрифт
+        mov     edi, offset Font  ; Обнулить содержимое
+        mov     ecx, TYPE Font
+        cld
+        xor     al, al
+        rep     stosb
+
+        mov     [Font.lfHeight], edx
+        mov     [Font.lfOrientation], 900
+        mov     [Font.lfEscapement], 900
+        mov     [Font.lfWeight], 700 ; FW_BOLD
+        mov     [Font.lfCharSet], DEFAULT_CHARSET
+
+        lea     edi, Font.lfFaceName ; Копируем имя шрифта
+        lea     esi, FaceName
+        mov     ecx, 7
+        rep     movsb
+
+        push    offset Font
+        call    CreateFontIndirectA
+
+        mov     [hFont], eax
+
+        ; Измеряем текст
+        mov     ecx, ICON_NUM     ; Количество иконок
+        xor     ebx, ebx          ; Индекс в массиве
+
+MeasureIcons:
+        push    ecx
+
+        ; Получить размер текста
+        push    offset txtSize
+        push    IconLen[ebx]      ; Длина строки
+        push    IconName[ebx]     ; Сама строка
+        push    [hDC]
+        call    GetTextExtentPoint32A
+
+        mov     eax, [txtSize.tcx]
+        mov     IconTextWidth[ebx], eax
+
+        pop     ecx
+        add     ebx, 4
+        loop    MeasureIcons
+
+        mov     eax, [txtSize.tcy]
+        mov     [IconTextHeight], eax
+
+        push    [hDC]
+        push    [hWnd]
+        call    ReleaseDC
+
+        ret
+
+UpdateFont endp
 ;-----------------------------------------------------------------------------
 end start
 

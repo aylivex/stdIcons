@@ -98,6 +98,11 @@ IconTextHeight   dd ?
 
 IconWidth        dd ?
 
+IconMaxWidth     dd ?
+
+brushMargin      dd ?
+brush            dd 3 dup (?)
+
 BASE_FONT_SIZE = 14
 hFont            dd ?
 
@@ -209,6 +214,22 @@ start:
         push    L 0               ; hWndInsertAfter
         push    [newhwnd]
         call    SetWindowPos
+
+        push    L 8080FFh
+        call    CreateSolidBrush
+        mov     [brushMargin], eax
+
+        push    L 80FF80h
+        call    CreateSolidBrush
+        mov     [brush], eax
+
+        push    L 0FF8080h
+        call    CreateSolidBrush
+        mov     [brush+4], eax
+
+        push    L 0FF80FFh
+        call    CreateSolidBrush
+        mov     [brush+8], eax
 
 ;**************************************************************************
 ;*****                      Редактируем системное меню                *****
@@ -354,8 +375,23 @@ WndProc          endp
 PaintWindow proc uses ebx edi esi
         LOCAL    theDC: DWORD
         LOCAL    oldFont: DWORD
+        LOCAL    rc: RECT
 
         mov     [theDC], eax
+
+        ; Draw grid
+        mov     [rc.rcLeft], 0
+        mov     [rc.rcTop], MARGIN
+        mov     [rc.rcRight], MARGIN
+        mov     eax, IconMaxWidth
+        add     eax, MARGIN
+        mov     [rc.rcBottom], eax
+
+        push    [brushMargin]
+        lea     eax, rc
+        push    eax
+        push    [theDC]
+        call    FillRect
 
         ; Нарисовать иконки
         mov     ebx, 0            ; Индекс иконки (смещение идентификатора)
@@ -569,6 +605,7 @@ nextWidth:
         loop    MaxTextWidth
 
         push    edx
+        mov     [IconMaxWidth], edx
 
         push    L 4 ; SM_CYCAPTION
         call    GetSystemMetrics

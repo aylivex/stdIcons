@@ -35,3 +35,6 @@ extrn            ShowWindow:PROC
 extrn            TextOutA:PROC
 extrn            TranslateMessage:PROC
 extrn            UpdateWindow:PROC
+
+extrn            CreateSolidBrush:PROC
+extrn            FillRect:PROC

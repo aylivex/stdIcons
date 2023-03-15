@@ -137,7 +137,7 @@ start:
 ;
 ; Инициализировать структуру WndClass (окнонного класса)
 ;
-        mov     [wc.clsStyle], CS_HREDRAW + CS_VREDRAW + CS_GLOBALCLASS
+        mov     [wc.clsStyle], CS_HREDRAW + CS_VREDRAW
         mov     [wc.clsLpfnWndProc], offset WndProc ; оконная процедура
         mov     [wc.clsCbClsExtra], 0
         mov     [wc.clsCbWndExtra], 0

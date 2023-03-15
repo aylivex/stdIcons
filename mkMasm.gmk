@@ -2,7 +2,7 @@
 #   Copyright (c) 2023 Alexey Ivanov
 
 #   nmake /f mkMasm.gmk            Will build Icons.exe
-#   nmake /f mkMasm.gmk /DDEBUG    Will build the debug version of Icons.exe
+#   nmake /f mkMasm.gmk DEBUG=     Will build the debug version of Icons.exe
 #
 #   INCLUDEPATH specifies path to include files (win32.inc)
 
@@ -12,9 +12,9 @@ OBJS = $(NAME).obj
 LIBS = kernel32.lib user32.lib gdi32.lib
 VERSION = 2.1
 
-!ifdef $d(DEBUG)
-MASMDEBUG=/zi
-LINKDEBUG=/verbose /debug:full
+!ifdef DEBUG
+MASMDEBUG=/Zi
+LINKDEBUG=/debug:full
 !else
 MASMDEBUG=
 LINKDEBUG=/release

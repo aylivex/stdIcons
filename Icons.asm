@@ -101,7 +101,7 @@ IconWidth        dd ?
 IconMaxWidth     dd ?
 
 brushMargin      dd ?
-brush            dd 3 dup (?)
+brush            dd 4 dup (?)
 
 BASE_FONT_SIZE = 14
 hFont            dd ?
@@ -230,6 +230,10 @@ start:
         push    L 0FF80FFh
         call    CreateSolidBrush
         mov     [brush+8], eax
+
+        push    L 080FFFFh
+        call    CreateSolidBrush
+        mov     [brush+12], eax
 
 ;**************************************************************************
 ;*****                      Редактируем системное меню                *****
@@ -388,10 +392,72 @@ PaintWindow proc uses ebx edi esi
         mov     [rc.rcBottom], eax
 
         push    [brushMargin]
-        lea     eax, rc
-        push    eax
+        lea     edi, rc
+        push    edi
         push    [theDC]
         call    FillRect
+
+        add     [rc.rcLeft], MARGIN
+        mov     [rc.rcTop], 0
+        add     [rc.rcBottom], MARGIN
+
+        mov     eax, [IconTextHeight]
+        add     [rc.rcRight], eax
+
+        mov     ecx, ICON_NUM
+PaintGrid:
+        lea     esi, brush
+        push    ecx
+
+        lodsd                   ; Load the brush
+        push    eax             
+        push    edi
+        push    [theDC]
+        call    FillRect
+
+
+        mov     eax, [IconTextHeight]
+        add     [rc.rcLeft], eax
+        add     [rc.rcRight], eax
+        add     [rc.rcRight], TEXT_ICON_GAP
+
+        lodsd                   ; Load the brush
+        push    eax             
+        push    edi
+        push    [theDC]
+        call    FillRect
+
+
+        add     [rc.rcLeft], TEXT_ICON_GAP
+        mov     eax, [IconWidth]
+        add     [rc.rcRight], TEXT_ICON_GAP
+        add     [rc.rcRight], eax
+
+        lodsd                   ; Load the brush
+        push    eax             
+        push    edi
+        push    [theDC]
+        call    FillRect
+
+        mov     eax, [IconWidth]
+        add     [rc.rcLeft], eax
+        add     [rc.rcRight], eax
+        add     [rc.rcRight], ICONS_GAP
+
+        lodsd                   ; Load the brush
+        push    eax             
+        push    edi
+        push    [theDC]
+        call    FillRect
+
+        add     [rc.rcLeft], ICONS_GAP
+        add     [rc.rcRight], ICONS_GAP
+        mov     eax, [IconTextHeight]
+        add     [rc.rcRight], eax
+
+        pop     ecx
+        loop    PaintGrid
+
 
         ; Нарисовать иконки
         mov     ebx, 0            ; Индекс иконки (смещение идентификатора)

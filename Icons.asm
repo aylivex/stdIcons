@@ -10,11 +10,6 @@ L equ DWORD PTR             ; Указатель типа 32 бита
 WndStyle = WS_OVERLAPPED OR WS_CAPTION OR WS_BORDER OR WS_SYSMENU OR WS_MINIMIZEBOX
 WndStyleEx = WS_EX_DLGMODALFRAME OR WS_EX_CLIENTEDGE
 
-; Размер окна
-WND_X_SIZE = 300
-WND_Y_SIZE = 138
-X_INC = 48
-
 SC_ABOUT = 1                ; Идентификатор команды в меню
 
 TEXTSIZE STRUC              ; Структура для получения размеров текста
@@ -168,17 +163,6 @@ start:
 ; Получить размер экрана и вычислить координаты окна на экране, чтобы
 ; оно было расположено по центру экрана
 ;
-        push    L SM_CXSCREEN
-        call    GetSystemMetrics
-        shr     eax, 1
-        sub     eax, WND_X_SIZE / 2
-        mov     WndX, eax
-
-        push    L SM_CYSCREEN
-        call    GetSystemMetrics
-        shr     eax, 1
-        sub     eax, WND_Y_SIZE / 2
-        mov     WndY, eax
 
 ;
 ; Создать окно
@@ -187,10 +171,10 @@ start:
         push    [hInst]                  ; hInstance
         push    L 0                      ; menu
         push    L 0                      ; parent hwnd
-        push    L WND_Y_SIZE             ; height
-        push    L WND_X_SIZE             ; width
-        push    L WndY                   ; y
-        push    L WndX                   ; x
+        push    L 0                      ; height
+        push    L 0                      ; width
+        push    L 0                      ; y
+        push    L 0                      ; x
         push    L WndStyle               ; Style
         push    offset szTitleName       ; Title string
         push    offset szClassName       ; Class name
@@ -199,6 +183,31 @@ start:
         call    CreateWindowExA
 
         mov     [newhwnd], eax           ; Запомнить идентификатор окна
+
+        call    UpdateFont
+
+        call    UpdateWindowSize
+
+        push    L SM_CXSCREEN
+        call    GetSystemMetrics
+        sub     eax, [windowWidth]
+        shr     eax, 1
+        mov     [WndX], eax
+
+        push    L SM_CYSCREEN
+        call    GetSystemMetrics
+        sub     eax, [windowHeight]
+        shr     eax, 1
+        mov     [WndY], eax
+
+        push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
+        push    [windowHeight]
+        push    [windowWidth]
+        push    [WndY]            ; y
+        push    [WndX]            ; x
+        push    L 0               ; hWndInsertAfter
+        push    [newhwnd]
+        call    SetWindowPos
 
 ;**************************************************************************
 ;*****                      Редактируем системное меню                *****
@@ -303,20 +312,6 @@ CreateIcon:
 
         add     ebx, 4            ; Следующий индекс
         loop    CreateIcon
-
-        mov     eax, [hwnd]
-        call    UpdateFont
-
-        call    UpdateWindowSize
-
-        push    L SWP_NOACTIVATE + SWP_NOMOVE + SWP_NOSENDCHANGING + SWP_NOZORDER
-        push    [windowHeight]
-        push    [windowWidth]
-        push    L 0               ; y
-        push    L 0               ; x
-        push    L 0               ; hWndInsertAfter
-        push    [hwnd]
-        call    SetWindowPos
 
         mov     eax, 0            ; Результат обработки сообщения
         jmp     finish
@@ -443,6 +438,7 @@ PaintWindow endp
 UpdateFont proc uses ebx edi esi
         LOCAL   hWnd: DWORD
         LOCAL   hDC: DWORD
+        LOCAL   oldFont: DWORD
 
         mov     [hWnd], eax
 
@@ -484,6 +480,11 @@ UpdateFont proc uses ebx edi esi
 
         mov     [hFont], eax
 
+        push    eax               ; Выбрать созданный шрифт в контекст
+        push    [hDC]
+        call    SelectObject
+        mov     [oldFont], eax    ; Сохранить старый шрифт
+
         ; Измеряем текст
         mov     ecx, ICON_NUM     ; Количество иконок
         xor     ebx, ebx          ; Индекс в массиве
@@ -507,6 +508,10 @@ MeasureIcons:
 
         mov     eax, [txtSize.tcy]
         mov     [IconTextHeight], eax
+
+        push    [oldFont]
+        push    [hDC]
+        call    SelectObject
 
         push    [hDC]
         push    [hWnd]

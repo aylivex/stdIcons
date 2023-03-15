@@ -28,6 +28,7 @@ extrn            LoadIconA@8:PROC
 extrn            MessageBoxA@16:PROC
 extrn            PostQuitMessage@4:PROC
 extrn            RegisterClassA@4:PROC
+extrn            SetWindowPos@28:PROC
 extrn            ShowWindow@8:PROC
 extrn            TranslateMessage@4:PROC
 extrn            UpdateWindow@4:PROC
@@ -50,6 +51,7 @@ LoadIconA equ LoadIconA@8
 MessageBoxA equ MessageBoxA@16
 PostQuitMessage equ PostQuitMessage@4
 RegisterClassA equ RegisterClassA@4
+SetWindowPos equ SetWindowPos@28
 ShowWindow equ ShowWindow@8
 TranslateMessage equ TranslateMessage@4
 UpdateWindow equ UpdateWindow@4

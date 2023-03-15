@@ -92,6 +92,8 @@ IconName         dd offset Icon1
 .data?           ; Неинициализированные данные
 WndX             dd ?           ; Положение окна на экране
 WndY             dd ?
+windowWidth      dd ?
+windowHeight     dd ?
 
                  ; Идентификаторы загруженных иконок
 hIcons           dd ICON_NUM dup (?)
@@ -99,8 +101,17 @@ hIcons           dd ICON_NUM dup (?)
 IconTextWidth    dd ICON_NUM dup (?)
 IconTextHeight   dd ?
 
+IconWidth        dd ?
+
 BASE_FONT_SIZE = 14
 hFont            dd ?
+
+; Отступ от краёв окна
+MARGIN = 8
+; Отступ между иконками
+ICONS_GAP = 8
+; Отступ между текстом и иконкой
+TEXT_ICON_GAP = 4
 
 hSysMenu         dd ?
 
@@ -296,6 +307,17 @@ CreateIcon:
         mov     eax, [hwnd]
         call    UpdateFont
 
+        call    UpdateWindowSize
+
+        push    L SWP_NOACTIVATE + SWP_NOMOVE + SWP_NOSENDCHANGING + SWP_NOZORDER
+        push    [windowHeight]
+        push    [windowWidth]
+        push    L 0               ; y
+        push    L 0               ; x
+        push    L 0               ; hWndInsertAfter
+        push    [hwnd]
+        call    SetWindowPos
+
         mov     eax, 0            ; Результат обработки сообщения
         jmp     finish
 
@@ -341,14 +363,17 @@ PaintWindow proc uses ebx edi esi
 
         ; Нарисовать иконки
         mov     ebx, 0            ; Индекс иконки (смещение идентификатора)
-        mov     edx, 18           ; Горизонтальная координата иконки
+
+        mov     edx, MARGIN        ; Горизонтальная координата иконки
+        add     edx, [IconTextHeight]
+        add     edx, TEXT_ICON_GAP
         mov     ecx, ICON_NUM     ; Количество иконок
 DrawIcons:
         push    ecx               ; Сохранить регистры для дальнейшего
         push    edx               ;   использования
 
         push    hIcons[ebx]       ; Идентификатор иконки
-        push    L 10              ; y
+        push    L MARGIN          ; y
         push    edx               ; x
         push    [theDC]           ; Контекст устройства
         call    DrawIcon          ; Нарисовать иконку
@@ -357,7 +382,10 @@ DrawIcons:
         pop     ecx
 
         add     ebx,  4           ; Перейти к следующей иконке
-        add     edx, X_INC
+        add     edx, ICONS_GAP
+        add     edx, [IconTextHeight]
+        add     edx, [IconWidth]
+        add     edx, TEXT_ICON_GAP
         loop    DrawIcons
 
         ; Нарисовать надписи
@@ -375,24 +403,14 @@ DrawIcons:
         mov     [oldFont], eax    ; Сохранить старый шрифт
 
         mov     ecx, ICON_NUM     ; Количество иконок
-        mov     edx, 2            ; Горизонтальная координата вывода текста
+        mov     edx, MARGIN       ; Горизонтальная координата вывода текста
         mov     ebx, 0            ; Индекс в массиве
 IconText:
         push    ecx               ; Сохранить важные регистры
         push    edx
-        push    edx
 
-        ; Получить размер текста
-        push    offset txtSize
-        push    IconLen[ebx]      ; Длина строки
-        push    IconName[ebx]     ; Сама строка
-        push    [theDC]
-        call    GetTextExtentPoint32A
-
-        pop     edx               ; Восстановить координату по X
-
-        mov     eax, 3            ; Учесть размер текста в координате Y
-        add     eax, dword ptr txtSize.tcx
+        mov     eax, MARGIN       ; Учесть размер текста в координате Y
+        add     eax, IconTextWidth[ebx]
 
         ; Вывести надпись
         push    IconLen[ebx]      ; Длина строки
@@ -406,7 +424,10 @@ IconText:
         pop     ecx
 
         add     ebx, 4            ; Перейти к следующей иконке
-        add     edx, X_INC
+        add     edx, ICONS_GAP
+        add     edx, [IconTextHeight]
+        add     edx, [IconWidth]
+        add     edx, TEXT_ICON_GAP
         loop    IconText
 
         ; Восстановить исходный шрифт в контексте
@@ -494,6 +515,77 @@ MeasureIcons:
         ret
 
 UpdateFont endp
+
+;-----------------------------------------------------------------------------
+; eax contains the window handle
+UpdateWindowSize proc
+        push    L 11 ; SM_CXICON
+        call    GetSystemMetrics
+
+        mov     [IconWidth], eax
+
+        add     eax, [IconTextHeight]
+        add     eax, TEXT_ICON_GAP
+        add     eax, ICONS_GAP
+        mov     edx, ICON_NUM
+        mul     edx
+        sub     eax, ICONS_GAP
+
+        mov     edx, MARGIN
+        shl     edx, 1
+        add     eax, edx
+
+        push    eax
+
+        push    L 8 ; SM_CXFIXEDFRAME
+        call    GetSystemMetrics
+
+        mov     edx, eax
+        shl     edx, 1
+        pop     eax
+        add     eax, edx
+        mov     [windowWidth], eax
+
+        mov     esi, offset IconTextWidth
+        mov     edx, [esi]
+        add     esi, 4
+        mov     ecx, ICON_NUM
+        dec     ecx
+        cld
+MaxTextWidth:        
+        lodsd
+        cmp     eax, edx
+        jle     nextWidth
+
+        mov     edx, eax
+
+nextWidth:
+        loop    MaxTextWidth
+
+        push    edx
+
+        push    L 4 ; SM_CYCAPTION
+        call    GetSystemMetrics
+
+        pop     edx
+        add     edx, eax
+        push    edx
+
+        push    L 8 ; SM_CYFIXEDFRAME
+        call    GetSystemMetrics
+
+        pop     edx
+        shl     eax, 1
+        add     edx, eax
+
+        mov     eax, MARGIN
+        shl     eax, 1
+        add     edx, eax
+
+        mov     [windowHeight], edx
+
+        ret
+UpdateWindowSize endp
 ;-----------------------------------------------------------------------------
 end start
 

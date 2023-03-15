@@ -30,6 +30,7 @@ extrn            ReleaseDC:PROC
 extrn            RegisterClassA:PROC
 extrn            SelectObject:PROC
 extrn            SetBkColor:PROC
+extrn            SetWindowPos:PROC
 extrn            ShowWindow:PROC
 extrn            TextOutA:PROC
 extrn            TranslateMessage:PROC

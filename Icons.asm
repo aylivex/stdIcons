@@ -159,10 +159,6 @@ start:
         push    offset wc
         call    RegisterClassA          ; Зарегистрировать оконный класс
 
-;
-; Получить размер экрана и вычислить координаты окна на экране, чтобы
-; оно было расположено по центру экрана
-;
 
 ;
 ; Создать окно
@@ -188,6 +184,10 @@ start:
 
         call    UpdateWindowSize
 
+;
+; Получить размер экрана и вычислить координаты окна на экране, чтобы
+; оно было расположено по центру экрана
+;
         push    L SM_CXSCREEN
         call    GetSystemMetrics
         sub     eax, [windowWidth]
@@ -200,6 +200,7 @@ start:
         shr     eax, 1
         mov     [WndY], eax
 
+        ; Переместить окно в центр экрана
         push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
         push    [windowHeight]
         push    [windowWidth]

@@ -458,6 +458,17 @@ PaintGrid:
         pop     ecx
         loop    PaintGrid
 
+        ; The last margin
+        sub     [rc.rcLeft], ICONS_GAP
+        sub     [rc.rcRight], ICONS_GAP
+        add     [rc.rcTop], MARGIN
+        sub     [rc.rcBottom], MARGIN
+
+        push    [brushMargin]
+        push    edi
+        push    [theDC]
+        call    FillRect
+
 
         ; Нарисовать иконки
         mov     ebx, 0            ; Индекс иконки (смещение идентификатора)

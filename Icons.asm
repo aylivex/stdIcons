@@ -652,6 +652,17 @@ UpdateWindowSize proc
         shl     edx, 1
         pop     eax
         add     eax, edx
+
+        push    eax
+
+        push    L 45 ; SM_CXEDGE
+        call    GetSystemMetrics
+
+        mov     edx, eax
+        shl     edx, 1
+        pop     eax
+        add     eax, edx
+
         mov     [windowWidth], eax
 
         mov     esi, offset IconTextWidth
@@ -681,6 +692,14 @@ nextWidth:
         push    edx
 
         push    L 8 ; SM_CYFIXEDFRAME
+        call    GetSystemMetrics
+
+        pop     edx
+        shl     eax, 1
+        add     edx, eax
+        push    edx
+
+        push    L 46 ; SM_CYEDGE
         call    GetSystemMetrics
 
         pop     edx

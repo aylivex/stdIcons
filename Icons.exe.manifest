@@ -30,7 +30,7 @@
                 xmlns:v2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
             <cp:activeCodePage>UTF-8</cp:activeCodePage> 
             <v1:dpiAware>true/pm</v1:dpiAware>
-            <v2:dpiAwareness>PerMonitorV2, system, unaware</v2:dpiAwareness>
+            <v2:dpiAwareness>PerMonitorV2, PerMonitor, system, unaware</v2:dpiAwareness>
         </asmv3:windowsSettings>
     </asmv3:application>
     <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">

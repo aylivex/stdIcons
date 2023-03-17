@@ -78,3 +78,10 @@ ReleaseDC equ ReleaseDC@8
 SelectObject equ SelectObject@8
 SetBkColor equ SetBkColor@8
 TextOutA equ TextOutA@20
+
+
+extrn            CreateSolidBrush@4:PROC
+extrn            FillRect@12:PROC
+
+CreateSolidBrush equ CreateSolidBrush@4
+FillRect equ FillRect@12

@@ -1,24 +1,24 @@
 ; Copyright (c) 1998-2023 Alexey Ivanov
 ;
-.386                        ; Разрешить инструкции процессора 80386
-.model flat, STDCALL        ; Задать модель для 32битных программ
-include win32.inc           ; 32битные константы и структуры
+.386                                    ; Enable 32-bit instructions of 80386
+.model flat, STDCALL                    ; Model for 32-bit apps and calling convention
+include win32.inc                       ; Consts and structures for Windows
 
-L equ DWORD PTR             ; Указатель типа 32 бита
+L equ DWORD PTR                         ; Type pointer: 32 bit double-word
 
-; Тип окна
+; Styles of the window
 WndStyle = WS_OVERLAPPED OR WS_CAPTION OR WS_BORDER OR WS_SYSMENU OR WS_MINIMIZEBOX
 WndStyleEx = WS_EX_DLGMODALFRAME OR WS_EX_CLIENTEDGE
 
-SC_ABOUT = 1                ; Идентификатор команды в меню
+SC_ABOUT = 1                            ; ID of About command in the window menu
 
-TEXTSIZE STRUC              ; Структура для получения размеров текста
+TEXTSIZE STRUC                          ; Structure for getting text size
   tcx dd ?
   tcy dd ?
 TEXTSIZE ENDS
 
 ;
-; Определяем внешние функции, которыми мы будем пользоваться
+; External functions from Win32 API
 ;
 ifdef __tasm__
     include extern.tasm.asm
@@ -26,29 +26,29 @@ elseifdef __masm__
     include extern.masm.asm
 endif
 
-.data            ; Инициализированные данные
-newhwnd          dd 0            ; Идентификатор окна
-lppaint          PAINTSTRUCT <?> ; Структура для рисования окна
-msg              MSGSTRUCT   <?> ; Структура для получения сообщений
-wc               WNDCLASS    <?> ; Класс окна
+.data            ; Initialised data
+newhwnd          dd 0                   ; Window handle
+lppaint          PAINTSTRUCT <?>        ; Painting structure
+msg              MSGSTRUCT   <?>        ; Message structure
+wc               WNDCLASS    <?>        ; Class of the window
 
-hInst            dd 0            ; Идентификатор процесса
+hInst            dd 0                   ; Handle of the module / process
 
 .const
 
-szTitleName      db 'Стандартные иконки', 0   ; Заголовок окна
-szClassName      db 'SHOWICONS32', 0          ; Имя окнонного класса
-MenuCaption      db '&О Программе', 0         ; Название пункта меню
-                                 ; Строка информации
+szTitleName      db 'Стандартные иконки', 0   ; Caption of the window
+szClassName      db 'SHOWICONS32', 0          ; Name of the window class
+MenuCaption      db '&О Программе', 0         ; Caption of the menu item
+                                 ; About the program
 MBInfo           db 'Стандартные иконки', 13, 10, 13, 10
-                 db 'Версия 2.0 от 19 сентября 1998 г.', 13, 10
+                 db 'Версия 3.0, март 2023 г.', 13, 10
                  db '© 1998-2023 Алексей Иванов', 0
 
 ALIGN 4
 
 ICON_NUM = 6
 
-; Идентификаторы иконок
+; IDs of the icons
 IconNames        dd IDI_APPLICATION
                  dd IDI_ASTERISK
                  dd IDI_EXCLAMATION
@@ -56,7 +56,7 @@ IconNames        dd IDI_APPLICATION
                  dd IDI_QUESTION
                  dd IDI_WINLOGO
 
-; Названия иконок для вывода надписей
+; IDs in the text form for displaying
 Icon1            db 'IDI_APPLICATION', 0
 Icon2            db 'IDI_ASTERISK', 0
 Icon3            db 'IDI_EXCLAMATION', 0
@@ -64,11 +64,12 @@ Icon4            db 'IDI_HAND', 0
 Icon5            db 'IDI_QUESTION', 0
 Icon6            db 'IDI_WINLOGO', 0
 
+; Font family for display
 FaceName         db 'Arial', 0
 
 ALIGN 4
 
-; Длины соответствующих названий иконок
+; Lengths of the icon IDs
 IconLen          dd 15
                  dd 12
                  dd 15
@@ -76,7 +77,7 @@ IconLen          dd 15
                  dd 12
                  dd 11
 
-; Смещения названий иконок
+; Pointers to the text icon IDs
 IconName         dd offset Icon1
                  dd offset Icon2
                  dd offset Icon3
@@ -84,74 +85,79 @@ IconName         dd offset Icon1
                  dd offset Icon5
                  dd offset Icon6
 
-.data?           ; Неинициализированные данные
-WndX             dd ?           ; Положение окна на экране
+.data?           ; Uninitialised data
+WndX             dd ?           ; Window location and
 WndY             dd ?
-windowWidth      dd ?
+windowWidth      dd ?           ; ... size
 windowHeight     dd ?
 
-                 ; Идентификаторы загруженных иконок
+                 ; Handles of the loaded icons
 hIcons           dd ICON_NUM dup (?)
-                 ; Длина текста названий иконок
+                 ; Widths of the rendered icon text
 IconTextWidth    dd ICON_NUM dup (?)
+                 ; and its height
 IconTextHeight   dd ?
 
+                 ; The width of the icon
 IconWidth        dd ?
 
+                 ; Max width of the rendered icon text
 IconMaxWidth     dd ?
 
+                 ; Brush handles to paint grid background
 brushMargin      dd ?
 brush            dd 4 dup (?)
 
 BASE_FONT_SIZE = 14
+                 ; Handle to the font
 hFont            dd ?
 
-; Отступ от краёв окна
+; Margin around the window edge
 MARGIN = 8
-; Отступ между иконками
+; Gap between icon and next icon
 ICONS_GAP = 8
-; Отступ между текстом и иконкой
+; Gap between icon text and its image
 TEXT_ICON_GAP = 4
 
-hSysMenu         dd ?
 
-txtSize          TEXTSIZE <?>   ; Структура для получения размера текста
+hSysMenu         dd ?                   ; Handle to (system) window menu
 
-Font             LOGFONT <?>    ; Структура для создания шрифта
+txtSize          TEXTSIZE <?>           ; Text size
+
+Font             LOGFONT <?>            ; Logical font
 
 
 
-.code            ; Код программы
+.code            ; App code
 
 ;-----------------------------------------------------------------------------
 ;
-; Сюда нам передается управление от загрузчика.
+; The starting point of the execution
 ;
 start:
 
         push    L 0
-        call    GetModuleHandleA        ; get hmod (in eax) (идентификатор модуля)
-        mov     [hInst], eax            ; hInstance - то же, что и HMODULE
-                                        ; в мире Win32
+        call    GetModuleHandleA        ; Get hInstance which is the same
+        mov     [hInst], eax            ; as HMODULE
 
 ;
-; Инициализировать структуру WndClass (окнонного класса)
+; Initialise window class (WndClass)
 ;
         mov     [wc.clsStyle], CS_HREDRAW + CS_VREDRAW
-        mov     [wc.clsLpfnWndProc], offset WndProc ; оконная процедура
+        mov     [wc.clsLpfnWndProc], offset WndProc
         mov     [wc.clsCbClsExtra], 0
         mov     [wc.clsCbWndExtra], 0
 
         mov     eax, [hInst]
         mov     [wc.clsHInstance], eax
 
-        ; Загрузить иконку для приложения
+        ; Load standard app icon as the window icon
         push    L IDI_APPLICATION
         push    L 0
         call    LoadIconA
         mov     [wc.clsHIcon], eax
 
-        ; Загрузить курсор для приложения
+        ; Cursor for the window
         push    L IDC_ARROW
         push    L 0
         call    LoadCursorA
@@ -162,59 +168,62 @@ start:
         mov     dword ptr [wc.clsLpszClassName], offset szClassName
 
         push    offset wc
-        call    RegisterClassA          ; Зарегистрировать оконный класс
+        call    RegisterClassA          ; Register window class
 
 
 ;
-; Создать окно
+; Create window
 ;
-        push    L 0                      ; lpParam
-        push    [hInst]                  ; hInstance
-        push    L 0                      ; menu
-        push    L 0                      ; parent hwnd
-        push    L 0                      ; height
-        push    L 0                      ; width
-        push    L 0                      ; y
-        push    L 0                      ; x
-        push    L WndStyle               ; Style
-        push    offset szTitleName       ; Title string
-        push    offset szClassName       ; Class name
-        push    L WndStyleEx             ; extra style
+        push    L 0                     ; lpParam
+        push    [hInst]                 ; hInstance
+        push    L 0                     ; menu
+        push    L 0                     ; parent hwnd
+        push    L 0                     ; height
+        push    L 0                     ; width
+        push    L 0                     ; y
+        push    L 0                     ; x
+        push    L WndStyle              ; Style
+        push    offset szTitleName      ; Title string
+        push    offset szClassName      ; Class name
+        push    L WndStyleEx            ; extra style
 
         call    CreateWindowExA
 
-        mov     [newhwnd], eax           ; Запомнить идентификатор окна
+        mov     [newhwnd], eax          ; Save the handle to the window
 
-        call    UpdateFont
+        call    UpdateFont              ; Create the font
+                                        ; eax still contains the hWnd
 
-        call    UpdateWindowSize
+        call    UpdateWindowSize        ; Calculate the window size
 
 ;
-; Получить размер экрана и вычислить координаты окна на экране, чтобы
-; оно было расположено по центру экрана
+; Centre the window on the screen
 ;
         push    L SM_CXSCREEN
         call    GetSystemMetrics
-        sub     eax, [windowWidth]
-        shr     eax, 1
+        sub     eax, [windowWidth]      ; (screenWidth - windowWidth)
+        shr     eax, 1                  ; / 2
         mov     [WndX], eax
 
         push    L SM_CYSCREEN
         call    GetSystemMetrics
-        sub     eax, [windowHeight]
-        shr     eax, 1
+        sub     eax, [windowHeight]     ; (screenHeight - windowWidth)
+        shr     eax, 1                  ; / 2
         mov     [WndY], eax
 
-        ; Переместить окно в центр экрана
+        ; Position the window and set its size
         push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
         push    [windowHeight]
         push    [windowWidth]
-        push    [WndY]            ; y
-        push    [WndX]            ; x
-        push    L 0               ; hWndInsertAfter
+        push    [WndY]
+        push    [WndX]
+        push    L 0                     ; hWndInsertAfter
         push    [newhwnd]
         call    SetWindowPos
 
+;
+; Create brushes for grid
+;
         push    L 8080FFh
         call    CreateSolidBrush
         mov     [brushMargin], eax
@@ -235,33 +244,36 @@ start:
         call    CreateSolidBrush
         mov     [brush+12], eax
 
-;**************************************************************************
-;*****                      Редактируем системное меню                *****
-;**************************************************************************
-
-        ; Добавить команду в системное меню
-        push    L 0                      ; bRevert (False)
-        push    [newhwnd]                ; hWnd
-        call    GetSystemMenu            ; Получить идентификатор
+;
+; Add "About" command into (system) window menu
+;
+        push    L 0                     ; bRevert (False)
+        push    [newhwnd]               ; hWnd
+        call    GetSystemMenu           ; Get the handle
         mov     [hSysMenu], eax
 
-        push    offset MenuCaption       ; lpNewItem
-        push    L SC_ABOUT               ; uIDNewItem
-        push    L MF_BYPOSITION          ; uFlags
-        push    L -1                     ; uPosition
-        push    eax                      ; hMenu
-        call    InsertMenuA              ; Добавить новый пункт
+        push    offset MenuCaption      ; lpNewItem
+        push    L SC_ABOUT              ; uIDNewItem
+        push    L MF_BYPOSITION         ; uFlags
+        push    L -1                    ; uPosition
+        push    eax                     ; hMenu
+        call    InsertMenuA             ; Insert the new item
 
-        ; Показать окно
+;
+; Show the main window
+;
         push    L SW_SHOWNORMAL
         push    [newhwnd]
         call    ShowWindow
 
-        ; Нарисовать содержимое в окне
+        ; Paint the window immediately
         push    [newhwnd]
         call    UpdateWindow
 
-msg_loop: ; Цикл обработки сообщений
+;
+; Message loop
+;
+msg_loop:
         push    L 0
         push    L 0
         push    L 0
@@ -281,20 +293,19 @@ msg_loop: ; Цикл обработки сообщений
 
 end_loop:
         push    [msg.msWPARAM]
-        call    ExitProcess       ; Завершить процесс
+        call    ExitProcess             ; Terminate the process
 
-        ; Мы никогда не придем сюда
+        ; end point of the main thread
 
 ;-----------------------------------------------------------------------------
 WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lparam:DWORD
 ;
-; ВНИМАНИЕ: Win32 требует, чтобы EBX, EDI и ESI были сохранены!  Мы удовлет-
-; воряем этому условию с помощью перечисления этих регистров после директивы
-; uses при описании процедуры. Это делается, чтобы Ассемблер автоматически
-; сохранил эти регистры для нас
+; Warning: Win32 requires preserving EBX, EDI and ESI across the calls.
+; Let Assembler do it for us via 'uses' keyword
 ;
 
-        cmp     [wmsg], WM_DESTROY  ; Обрабатываемые сообщения
+        ; Switch between the messages that are handled
+        cmp     [wmsg], WM_DESTROY
         je      wmdestroy
         cmp     [wmsg], WM_CREATE
         je      wmcreate
@@ -303,68 +314,68 @@ WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lp
         cmp     [wmsg], WM_SYSCOMMAND
         je      wmsyscommand
 
-        jmp     defwndproc          ; Для необрабатываемых программой
-                                    ;  сообщений
+        jmp     defwndproc              ; Call default window procedure
+                                        ; for all the other messages
 
-wmpaint:        ; Перерисовка окна
-        ; Начать операцию
+wmpaint:        ; Painting the window
         push    offset lppaint
         push    [hwnd]
-        call    BeginPaint
+        call    BeginPaint              ; Get HDC in eax
 
-        call    PaintWindow
+        call    PaintWindow             ; Really paint
+                                        ; eax -> HDC
 
-        ; Завершить операцию
         push    offset lppaint
         push    [hwnd]
-        call    EndPaint
+        call    EndPaint                ; Release HDC
 
-        mov     eax, 0            ; Результат обработки сообщения
+        mov     eax, 0                  ; Return code for WM_PAINT
         jmp     finish
 
-wmcreate:       ; Действия при создании окна
-        ; Загрузить иконки (получить идентификаторы)
-        mov     ecx, ICON_NUM     ; Количество иконок
-        mov     ebx, 0            ; Индекс
+wmcreate:       ; Initialise data for the window
+        ; Load the icons
+        mov     ecx, ICON_NUM           ; Number of icons
+        mov     ebx, 0                  ; Index (offset in arrays)
 CreateIcon:
-        push    ecx               ; Сохранить регистр
+        push    ecx                     ; Preserve the register
 
-        push    IconNames[ebx]    ; Идентификатор ресурса для иконки
-        push    L 0               ; Идентификатор модуля
-        call    LoadIconA         ; Загрузить иконку
-        mov     hIcons[ebx], eax  ; Сохранить полученный идентификатор
+        push    IconNames[ebx]          ; ID of the icon to load
+        push    L 0                     ; hInstance
+        call    LoadIconA               ; Load the icon
+        mov     hIcons[ebx], eax        ; Save the icon handle
 
-        pop     ecx               ; Восстановить регистр
+        pop     ecx                     ; Restore the register
 
-        add     ebx, 4            ; Следующий индекс
+        add     ebx, 4                  ; Next offset in arrays
         loop    CreateIcon
 
-        mov     eax, 0            ; Результат обработки сообщения
+        mov     eax, 0                  ; Return code for WM_PAINT
         jmp     finish
 
-wmsyscommand:
+wmsyscommand:   ; A command in window menu is selected
         cmp     [wparam], SC_ABOUT
         jne     defwndproc
 
-scabout:        ; Выбрана команда "О Программе"
-        push    MB_OK OR MB_ICONASTERISK ; Вывести окно сообщения
-        push    offset MenuCaption + 1
+scabout:        ; 'About' command is selected
+        push    MB_OK OR MB_ICONASTERISK
+        push    offset MenuCaption + 1  ; Skip & prefix from menu caption
         push    offset MBInfo
         push    [newhwnd]
-        call    MessageBoxA
+        call    MessageBoxA             ; Show the message with short
+                                        ; description
 
-        mov     eax, 0
+        mov     eax, 0                  ; Return code for WM_SYSCOMMAND
         jmp     finish
 
-defwndproc:     ; Необрабатываемые сообщения
+defwndproc:     ; Unhandled messages
         push    [lparam]
         push    [wparam]
         push    [wmsg]
         push    [hwnd]
-        call    DefWindowProcA    ; Вызвать оконную процедру по умолчанию
+        call    DefWindowProcA          ; Default handling
         jmp     finish
 
-wmdestroy:      ; Разрушение окна и завершение работы
+wmdestroy:      ; Destroy the window and exit the message loop
         push    L 0
         call    PostQuitMessage
 
@@ -372,7 +383,7 @@ wmdestroy:      ; Разрушение окна и завершение рабо
 
 finish:
         ret
-WndProc          endp
+WndProc         endp
 
 ;-----------------------------------------------------------------------------
 ; theDC is passed in eax
@@ -391,7 +402,7 @@ PaintWindow proc uses ebx edi esi
         add     eax, MARGIN
         mov     [rc.rcBottom], eax
 
-        push    [brushMargin]
+        push    [brushMargin]           ; Fill left margin
         lea     edi, rc
         push    edi
         push    [theDC]
@@ -405,15 +416,16 @@ PaintWindow proc uses ebx edi esi
         add     [rc.rcRight], eax
 
         mov     ecx, ICON_NUM
-PaintGrid:
+PaintGrid:                              ; Paint background for text, gap,
+                                        ; icon and another gap
         lea     esi, brush
         push    ecx
 
-        lodsd                   ; Load the brush
+        lodsd                           ; Load the brush from [esi]
         push    eax             
         push    edi
         push    [theDC]
-        call    FillRect
+        call    FillRect                ; Text background
 
 
         mov     eax, [IconTextHeight]
@@ -421,11 +433,11 @@ PaintGrid:
         add     [rc.rcRight], eax
         add     [rc.rcRight], TEXT_ICON_GAP
 
-        lodsd                   ; Load the brush
+        lodsd                           ; Load the brush from [esi]
         push    eax             
         push    edi
         push    [theDC]
-        call    FillRect
+        call    FillRect                ; Gap between text and icon
 
 
         add     [rc.rcLeft], TEXT_ICON_GAP
@@ -433,22 +445,22 @@ PaintGrid:
         add     [rc.rcRight], TEXT_ICON_GAP
         add     [rc.rcRight], eax
 
-        lodsd                   ; Load the brush
+        lodsd                           ; Load the brush from [esi]
         push    eax             
         push    edi
         push    [theDC]
-        call    FillRect
+        call    FillRect                ; Icon background
 
         mov     eax, [IconWidth]
         add     [rc.rcLeft], eax
         add     [rc.rcRight], eax
         add     [rc.rcRight], ICONS_GAP
 
-        lodsd                   ; Load the brush
+        lodsd                           ; Load the brush from [esi]
         push    eax             
         push    edi
         push    [theDC]
-        call    FillRect
+        call    FillRect                ; Gap between icon and next text
 
         add     [rc.rcLeft], ICONS_GAP
         add     [rc.rcRight], ICONS_GAP
@@ -470,76 +482,77 @@ PaintGrid:
         call    FillRect
 
 
-        ; Нарисовать иконки
-        mov     ebx, 0            ; Индекс иконки (смещение идентификатора)
+        ; Draw the icons
+        mov     ebx, 0                  ; Index (offset) of icon handle
 
-        mov     edx, MARGIN        ; Горизонтальная координата иконки
+        mov     edx, MARGIN             ; x of the icon
         add     edx, [IconTextHeight]
         add     edx, TEXT_ICON_GAP
-        mov     ecx, ICON_NUM     ; Количество иконок
+        mov     ecx, ICON_NUM           ; Number of icons
 DrawIcons:
-        push    ecx               ; Сохранить регистры для дальнейшего
-        push    edx               ;   использования
+        push    ecx                     ; Preserve the registers
+        push    edx
 
-        push    hIcons[ebx]       ; Идентификатор иконки
-        push    L MARGIN          ; y
-        push    edx               ; x
-        push    [theDC]           ; Контекст устройства
-        call    DrawIcon          ; Нарисовать иконку
+        push    hIcons[ebx]             ; Handle of the icon
+        push    L MARGIN                ; y
+        push    edx                     ; x
+        push    [theDC]                 ; Device context
+        call    DrawIcon                ; Draw the icon on the screen
 
-        pop     edx               ; Восстановить регистры
+        pop     edx                     ; Restore the registers
         pop     ecx
 
-        add     ebx,  4           ; Перейти к следующей иконке
+        add     ebx,  4                 ; Next hIcon in the array
         add     edx, ICONS_GAP
         add     edx, [IconTextHeight]
         add     edx, [IconWidth]
         add     edx, TEXT_ICON_GAP
         loop    DrawIcons
 
-        ; Нарисовать надписи
-
-        push    COLOR_BTNFACE     ; Сделать фоновый цвет для шрифта таким
-        call    GetSysColor       ;  же, как и цвет формы
+        ; Draw the text
+        push    COLOR_BTNFACE           ; Get the background colour
+        call    GetSysColor             ; of buttons (and the window)
 
         push    eax
-        push    [theDC]
-        call    SetBkColor
+        push    [theDC]                 ; Set it as the background
+        call    SetBkColor              ; for text
 
-        push    [hFont]           ; Выбрать созданный шрифт в контекст
+        push    [hFont]                 ; Select the font
         push    [theDC]
         call    SelectObject
-        mov     [oldFont], eax    ; Сохранить старый шрифт
+        mov     [oldFont], eax          ; Save the old font
 
-        mov     ecx, ICON_NUM     ; Количество иконок
-        mov     edx, MARGIN       ; Горизонтальная координата вывода текста
-        mov     ebx, 0            ; Индекс в массиве
+
+        mov     ecx, ICON_NUM           ; Number of icons
+        mov     edx, MARGIN             ; x for the text
+        mov     ebx, 0                  ; Index (offset) in the array
 IconText:
-        push    ecx               ; Сохранить важные регистры
+        push    ecx                     ; Preserve the registers
         push    edx
 
-        mov     eax, MARGIN       ; Учесть размер текста в координате Y
-        add     eax, IconTextWidth[ebx]
+        mov     eax, MARGIN             ; Calculate y:
+        add     eax, IconTextWidth[ebx] ; MARGIN + IconTextWidth
 
-        ; Вывести надпись
-        push    IconLen[ebx]      ; Длина строки
-        push    IconName[ebx]     ; Строка
-        push    eax               ; y
-        push    edx               ; x
-        push    [theDC]           ; Контекст устройства
+        ; Draw the text
+        push    IconLen[ebx]            ; Text length
+        push    IconName[ebx]           ; Text itself
+        push    eax                     ; y
+        push    edx                     ; x
+        push    [theDC]                 ; Device context
         call    TextOutA
 
-        pop     edx               ; Восстановить регистры
+        pop     edx                     ; Restore the registers
         pop     ecx
 
-        add     ebx, 4            ; Перейти к следующей иконке
-        add     edx, ICONS_GAP
-        add     edx, [IconTextHeight]
-        add     edx, [IconWidth]
+        add     ebx, 4                  ; Next icon text offset
+
+        add     edx, ICONS_GAP          ; Calculate x of the next text
+        add     edx, [IconTextHeight]   ; x + ICONS_GAP + IconTextHeight
+        add     edx, [IconWidth]        ; + IconWidth + TEXT_ICON_GAP 
         add     edx, TEXT_ICON_GAP
         loop    IconText
 
-        ; Восстановить исходный шрифт в контексте
+        ; Select the old font into the device context
         push    [oldFont]
         push    [theDC]
         call    SelectObject
@@ -548,6 +561,8 @@ IconText:
 PaintWindow endp
 
 ;-----------------------------------------------------------------------------
+; Creates the font and measures the text
+;
 ; eax contains the window handle
 UpdateFont proc uses ebx edi esi
         LOCAL   hWnd: DWORD
@@ -556,11 +571,11 @@ UpdateFont proc uses ebx edi esi
 
         mov     [hWnd], eax
 
-        push    eax
+        push    eax                     ; eax = hWnd
         call    GetDC
         mov     [hDC], eax
 
-        push    L 90              ; LOGPIXELSY
+        push    L 90                    ; = LOGPIXELSY
         push    eax
         call    GetDeviceCaps
 
@@ -569,10 +584,10 @@ UpdateFont proc uses ebx edi esi
         push    BASE_FONT_SIZE
         call    MulDiv
         neg     eax
-        mov     edx, eax
+        mov     edx, eax                ; edx stores the height of the font
 
-        ; Создаем новый шрифт
-        mov     edi, offset Font  ; Обнулить содержимое
+        ; Create the font
+        mov     edi, offset Font        ; Zero LOGFONT structure
         mov     ecx, TYPE Font
         cld
         xor     al, al
@@ -581,53 +596,53 @@ UpdateFont proc uses ebx edi esi
         mov     [Font.lfHeight], edx
         mov     [Font.lfOrientation], 900
         mov     [Font.lfEscapement], 900
-        mov     [Font.lfWeight], 700 ; FW_BOLD
+        mov     [Font.lfWeight], 700    ; = FW_BOLD
         mov     [Font.lfCharSet], DEFAULT_CHARSET
 
-        lea     edi, Font.lfFaceName ; Копируем имя шрифта
+        lea     edi, Font.lfFaceName    ; Copy the font family name
         lea     esi, FaceName
-        mov     ecx, 7
+        mov     ecx, 7                  ; The length of the font family
         rep     movsb
 
         push    offset Font
-        call    CreateFontIndirectA
+        call    CreateFontIndirectA     ; Create the font
 
-        mov     [hFont], eax
+        mov     [hFont], eax            ; and save it in variable
 
-        push    eax               ; Выбрать созданный шрифт в контекст
+        push    eax                     ; Select the newly created font
         push    [hDC]
         call    SelectObject
-        mov     [oldFont], eax    ; Сохранить старый шрифт
+        mov     [oldFont], eax          ; Preserve the old font
 
-        ; Измеряем текст
-        mov     ecx, ICON_NUM     ; Количество иконок
-        xor     ebx, ebx          ; Индекс в массиве
+        ; Measure the text for the icons
+        mov     ecx, ICON_NUM           ; Number of icons
+        xor     ebx, ebx                ; Index (offset) in the array
 
 MeasureIcons:
-        push    ecx
+        push    ecx                     ; Preserve the counter
 
-        ; Получить размер текста
+        ; Measure a string
         push    offset txtSize
-        push    IconLen[ebx]      ; Длина строки
-        push    IconName[ebx]     ; Сама строка
+        push    IconLen[ebx]            ; Text length
+        push    IconName[ebx]           ; Text itself
         push    [hDC]
         call    GetTextExtentPoint32A
 
-        mov     eax, [txtSize.tcx]
+        mov     eax, [txtSize.tcx]      ; Save text width
         mov     IconTextWidth[ebx], eax
 
         pop     ecx
         add     ebx, 4
         loop    MeasureIcons
 
-        mov     eax, [txtSize.tcy]
-        mov     [IconTextHeight], eax
+        mov     eax, [txtSize.tcy]      ; Save text height
+        mov     [IconTextHeight], eax   ; (it's the same for all icons)
 
-        push    [oldFont]
+        push    [oldFont]               ; Select the old font
         push    [hDC]
         call    SelectObject
 
-        push    [hDC]
+        push    [hDC]                   ; Release HDC
         push    [hWnd]
         call    ReleaseDC
 
@@ -636,20 +651,24 @@ MeasureIcons:
 UpdateFont endp
 
 ;-----------------------------------------------------------------------------
-; eax contains the window handle
+; Calculates the window size
 UpdateWindowSize proc
         push    L 11 ; SM_CXICON
         call    GetSystemMetrics
 
         mov     [IconWidth], eax
 
+        ; width = (IconTextHeight + TEXT_ICON_GAP
+        ;         + IconWidth (= eax) + ICONS_GAP) * ICON_NUM  
         add     eax, [IconTextHeight]
         add     eax, TEXT_ICON_GAP
         add     eax, ICONS_GAP
         mov     edx, ICON_NUM
         mul     edx
+        ;       - ICONS_GAP (there's no ICONS_GAP after the last one)
         sub     eax, ICONS_GAP
 
+        ;       + MARGIN * 2
         mov     edx, MARGIN
         shl     edx, 1
         add     eax, edx
@@ -659,6 +678,7 @@ UpdateWindowSize proc
         push    L 8 ; SM_CXFIXEDFRAME
         call    GetSystemMetrics
 
+        ;       + SM_CXFIXEDFRAME * 2
         mov     edx, eax
         shl     edx, 1
         pop     eax
@@ -669,6 +689,7 @@ UpdateWindowSize proc
         push    L 45 ; SM_CXEDGE
         call    GetSystemMetrics
 
+        ;       + SM_CXEDGE * 2
         mov     edx, eax
         shl     edx, 1
         pop     eax
@@ -676,6 +697,7 @@ UpdateWindowSize proc
 
         mov     [windowWidth], eax
 
+        ; Find the maximum width of the text
         mov     esi, offset IconTextWidth
         mov     edx, [esi]
         add     esi, 4
@@ -692,12 +714,14 @@ MaxTextWidth:
 nextWidth:
         loop    MaxTextWidth
 
-        push    edx
+        ; height = IconMaxWidth ...
         mov     [IconMaxWidth], edx
+        push    edx
 
         push    L 4 ; SM_CYCAPTION
         call    GetSystemMetrics
 
+        ;       + SM_CYCAPTION
         pop     edx
         add     edx, eax
         push    edx
@@ -705,6 +729,7 @@ nextWidth:
         push    L 8 ; SM_CYFIXEDFRAME
         call    GetSystemMetrics
 
+        ;       + SM_CYFIXEDFRAME * 2
         pop     edx
         shl     eax, 1
         add     edx, eax
@@ -713,10 +738,12 @@ nextWidth:
         push    L 46 ; SM_CYEDGE
         call    GetSystemMetrics
 
+        ;       + SM_CYEDGE * 2
         pop     edx
         shl     eax, 1
         add     edx, eax
 
+        ;       + MARGIN * 2
         mov     eax, MARGIN
         shl     eax, 1
         add     edx, eax
@@ -727,4 +754,3 @@ nextWidth:
 UpdateWindowSize endp
 ;-----------------------------------------------------------------------------
 end start
-

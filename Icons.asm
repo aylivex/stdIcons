@@ -104,9 +104,11 @@ IconWidth        dd ?
                  ; Max width of the rendered icon text
 IconMaxWidth     dd ?
 
+ifdef DEBUG_GRID
                  ; Brush handles to paint grid background
 brushMargin      dd ?
 brush            dd 4 dup (?)
+endif
 
 BASE_FONT_SIZE = 14
                  ; Handle to the font
@@ -221,6 +223,7 @@ start:
         push    [newhwnd]
         call    SetWindowPos
 
+ifdef DEBUG_GRID
 ;
 ; Create brushes for grid
 ;
@@ -243,6 +246,7 @@ start:
         push    L 080FFFFh
         call    CreateSolidBrush
         mov     [brush+12], eax
+endif ; DEBUG_GRID
 
 ;
 ; Add "About" command into (system) window menu
@@ -394,6 +398,7 @@ PaintWindow proc uses ebx edi esi
 
         mov     [theDC], eax
 
+ifdef DEBUG_GRID
         ; Draw grid
         mov     [rc.rcLeft], 0
         mov     [rc.rcTop], MARGIN
@@ -480,6 +485,7 @@ PaintGrid:                              ; Paint background for text, gap,
         push    edi
         push    [theDC]
         call    FillRect
+endif ; DEBUG_GRID
 
 
         ; Draw the icons

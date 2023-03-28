@@ -110,7 +110,7 @@ brushMargin      dd ?
 brush            dd 4 dup (?)
 endif
 
-BASE_FONT_SIZE = 14
+BASE_FONT_SIZE = 9
                  ; Handle to the font
 hFont            dd ?
 

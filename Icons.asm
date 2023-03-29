@@ -178,8 +178,8 @@ start:
         mov     [wc.clsHCursor], eax
 
         mov     [wc.clsHbrBackground], COLOR_BTNFACE + 1
-        mov     dword ptr [wc.clsLpszMenuName], 0
-        mov     dword ptr [wc.clsLpszClassName], offset szClassName
+        mov     [wc.clsLpszMenuName], 0
+        mov     [wc.clsLpszClassName], offset szClassName
 
         push    offset wc
         call    RegisterClassA          ; Register window class

@@ -33,96 +33,96 @@ endif
 ;
 .const
 
-szTitleName      db 'Стандартные иконки', 0   ; Caption of the window
-szClassName      db 'SHOWICONS32', 0          ; Name of the window class
-MenuCaption      db '&О Программе', 0         ; Caption of the menu item
-                                 ; About the program
-MBInfo           db 'Стандартные иконки', 13, 10, 13, 10
-                 db 'Версия 3.0, март 2023 г.', 13, 10
-                 db '© 1998-2023 Алексей Иванов', 0
+szTitleName     db 'Стандартные иконки', 0  ; Caption of the window
+szClassName     db 'SHOWICONS32', 0         ; Name of the window class
+MenuCaption     db '&О Программе', 0        ; Caption of the menu item
+                ; About the program
+MBInfo          db 'Стандартные иконки', 13, 10, 13, 10
+                db 'Версия 3.0, март 2023 г.', 13, 10
+                db '© 1998-2023 Алексей Иванов', 0
 
 ALIGN 4
 
 ICON_NUM = 6
 
 ; IDs of the icons
-IconNames        dd IDI_APPLICATION
-                 dd IDI_ASTERISK
-                 dd IDI_EXCLAMATION
-                 dd IDI_HAND
-                 dd IDI_QUESTION
-                 dd IDI_WINLOGO
+IconNames       dd IDI_APPLICATION
+                dd IDI_ASTERISK
+                dd IDI_EXCLAMATION
+                dd IDI_HAND
+                dd IDI_QUESTION
+                dd IDI_WINLOGO
 
 ; IDs in the text form for displaying
-Icon1            db 'IDI_APPLICATION', 0
-Icon2            db 'IDI_ASTERISK', 0
-Icon3            db 'IDI_EXCLAMATION', 0
-Icon4            db 'IDI_HAND', 0
-Icon5            db 'IDI_QUESTION', 0
-Icon6            db 'IDI_WINLOGO', 0
+Icon1           db 'IDI_APPLICATION', 0
+Icon2           db 'IDI_ASTERISK', 0
+Icon3           db 'IDI_EXCLAMATION', 0
+Icon4           db 'IDI_HAND', 0
+Icon5           db 'IDI_QUESTION', 0
+Icon6           db 'IDI_WINLOGO', 0
 
 ; Font family for display
-FaceName         db 'Arial', 0
+FaceName        db 'Arial', 0
 
 ALIGN 4
 
 ; Lengths of the icon IDs
-IconLen          dd 15
-                 dd 12
-                 dd 15
-                 dd  8
-                 dd 12
-                 dd 11
+IconLen         dd 15
+                dd 12
+                dd 15
+                dd  8
+                dd 12
+                dd 11
 
 ; Pointers to the text icon IDs
-IconName         dd offset Icon1
-                 dd offset Icon2
-                 dd offset Icon3
-                 dd offset Icon4
-                 dd offset Icon5
-                 dd offset Icon6
+IconName        dd offset Icon1
+                dd offset Icon2
+                dd offset Icon3
+                dd offset Icon4
+                dd offset Icon5
+                dd offset Icon6
 
 
 ;
 ; Uninitialised data
 ;
 .data?
-hInst            dd ?                   ; Handle of the module / process
-newhwnd          dd ?                   ; Window handle
+hInst           dd ?                    ; Handle of the module / process
+newhwnd         dd ?                    ; Window handle
 
-wc               WNDCLASS    <?>        ; Class of the window
+wc              WNDCLASS    <?>         ; Class of the window
 
-lppaint          PAINTSTRUCT <?>        ; Painting structure
-msg              MSGSTRUCT   <?>        ; Message structure
+lppaint         PAINTSTRUCT <?>         ; Painting structure
+msg             MSGSTRUCT   <?>         ; Message structure
 
 ALIGN 4
-WndX             dd ?                   ; Window location and
-WndY             dd ?
-windowWidth      dd ?                   ; ... size
-windowHeight     dd ?
+WndX            dd ?                    ; Window location and
+WndY            dd ?
+windowWidth     dd ?                    ; ... size
+windowHeight    dd ?
 
-                 ; Handles of the loaded icons
-hIcons           dd ICON_NUM dup (?)
-                 ; Widths of the rendered icon text
-IconTextWidth    dd ICON_NUM dup (?)
-                 ; and its height
-IconTextHeight   dd ?
+                ; Handles of the loaded icons
+hIcons          dd ICON_NUM dup (?)
+                ; Widths of the rendered icon text
+IconTextWidth   dd ICON_NUM dup (?)
+                ; and its height
+IconTextHeight  dd ?
 
-                 ; The width of the icon
-IconWidth        dd ?
+                ; The width of the icon
+IconWidth       dd ?
 
-                 ; Max width of the rendered icon text
-IconMaxWidth     dd ?
+                ; Max width of the rendered icon text
+IconMaxWidth    dd ?
 
 ifdef DEBUG_GRID
-                 ; Brush handles to paint grid background
-brushMargin      dd ?
-brush            dd 4 dup (?)
+                ; Brush handles to paint grid background
+brushMargin     dd ?
+brush           dd 4 dup (?)
 endif
 
 BASE_FONT_SIZE = 9
-                 ; Handle to the font
-hFont            dd ?
+                ; Handle to the font
+hFont           dd ?
 
 ; Margin around the window edge
 MARGIN = 8
@@ -132,15 +132,17 @@ ICONS_GAP = 8
 TEXT_ICON_GAP = 4
 
 
-hSysMenu         dd ?                   ; Handle to (system) window menu
+hSysMenu        dd ?                    ; Handle to (system) window menu
 
-txtSize          TEXTSIZE <?>           ; Text size
+txtSize         TEXTSIZE <?>            ; Text size
 
-Font             LOGFONT <?>            ; Logical font
+Font            LOGFONT <?>             ; Logical font
 
 
-
-.code            ; App code
+;
+; Application code
+;
+.code
 
 ;-----------------------------------------------------------------------------
 ;

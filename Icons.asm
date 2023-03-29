@@ -1,7 +1,7 @@
 ; Copyright (c) 1998-2023 Alexey Ivanov
 ;
 .386                                    ; Enable 32-bit instructions of 80386
-.model flat, STDCALL                    ; Model for 32-bit apps and calling convention
+.model flat, stdcall                    ; Model for 32-bit apps and calling convention
 include win32.inc                       ; Consts and structures for Windows
 
 L equ DWORD PTR                         ; Type pointer: 32 bit double-word
@@ -27,13 +27,10 @@ elseifdef __masm__
 endif
 
 .data            ; Initialised data
-newhwnd          dd 0                   ; Window handle
-lppaint          PAINTSTRUCT <?>        ; Painting structure
-msg              MSGSTRUCT   <?>        ; Message structure
-wc               WNDCLASS    <?>        ; Class of the window
 
-hInst            dd 0                   ; Handle of the module / process
-
+;
+; Constant data (read-only)
+;
 .const
 
 szTitleName      db 'Стандартные иконки', 0   ; Caption of the window
@@ -85,10 +82,23 @@ IconName         dd offset Icon1
                  dd offset Icon5
                  dd offset Icon6
 
-.data?           ; Uninitialised data
-WndX             dd ?           ; Window location and
+
+;
+; Uninitialised data
+;
+.data?
+hInst            dd ?                   ; Handle of the module / process
+newhwnd          dd ?                   ; Window handle
+
+wc               WNDCLASS    <?>        ; Class of the window
+
+lppaint          PAINTSTRUCT <?>        ; Painting structure
+msg              MSGSTRUCT   <?>        ; Message structure
+
+ALIGN 4
+WndX             dd ?                   ; Window location and
 WndY             dd ?
-windowWidth      dd ?           ; ... size
+windowWidth      dd ?                   ; ... size
 windowHeight     dd ?
 
                  ; Handles of the loaded icons

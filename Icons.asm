@@ -27,19 +27,14 @@ elseifdef __masm__
 endif
 
 .data            ; Initialised data
+bAboutLoaded    db 0                    ; About info loaded?
 
 ;
 ; Constant data (read-only)
 ;
 .const
 
-szTitleName     db 'Стандартные иконки', 0  ; Caption of the window
-szClassName     db 'SHOWICONS32', 0         ; Name of the window class
-MenuCaption     db '&О Программе', 0        ; Caption of the menu item
-                ; About the program
-MBInfo          db 'Стандартные иконки', 13, 10, 13, 10
-                db 'Версия 3.0, март 2023 г.', 13, 10
-                db '© 1998-2023 Алексей Иванов', 0
+szClassName     db 'stdIcons32', 0      ; Name of the window class
 
 ALIGN 4
 
@@ -138,6 +133,28 @@ txtSize         TEXTSIZE <?>            ; Text size
 
 Font            LOGFONT <?>             ; Logical font
 
+ALIGN 4
+
+; String resource IDs
+IDS_TITLE       = 101
+IDS_ABOUT_MENU  = 102
+IDS_ABOUT_TITLE = 103
+IDS_ABOUT_INFO  = 104
+
+IDS_FONT_NAME   = 150
+
+; Size of buffers for strings
+WIN_TITLE_BUF   = 128
+ABOUT_MENU_BUF  = 128
+ABOUT_TITLE_BUF = 128
+ABOUT_INFO_BUF  = 1024
+
+szTitleName     db WIN_TITLE_BUF dup (?)    ; Caption of the window
+szAboutMenu     db ABOUT_MENU_BUF dup (?)   ; Caption of the menu item
+                ; About the program
+szAboutTitle    dd ABOUT_TITLE_BUF dup (?)  ; Caption of the About message
+szAboutInfo     dd ABOUT_INFO_BUF  dup (?)  ; Text of the About message
+
 
 ;
 ; Application code
@@ -184,6 +201,13 @@ start:
         push    offset wc
         call    RegisterClassA          ; Register window class
 
+
+        ; Load the caption for the window
+        push    L WIN_TITLE_BUF         ; cchBufferMax
+        push    offset szTitleName      ; lpBuffer
+        push    L IDS_TITLE             ; uID
+        push    [hInst]
+        call    LoadStringA
 
 ;
 ; Create window
@@ -268,11 +292,27 @@ endif ; DEBUG_GRID
         call    GetSystemMenu           ; Get the handle
         mov     [hSysMenu], eax
 
-        push    offset MenuCaption      ; lpNewItem
+        ; Insert separator
+        push    L 0                     ; lpNewItem
+        push    L 0                     ; uIDNewItem
+        push    L MF_BYPOSITION OR MF_SEPARATOR  ; uFlags
+        push    L -1                    ; uPosition
+        push    eax                     ; hMenu
+        call    InsertMenuA             ; Insert the new item
+
+        ; Load the menu item title
+        push    L ABOUT_MENU_BUF        ; cchBufferMax
+        push    offset szAboutMenu      ; lpBuffer
+        push    L IDS_ABOUT_MENU        ; uID
+        push    [hInst]
+        call    LoadStringA
+
+        ; Insert the command
+        push    offset szAboutMenu      ; lpNewItem
         push    L SC_ABOUT              ; uIDNewItem
         push    L MF_BYPOSITION         ; uFlags
         push    L -1                    ; uPosition
-        push    eax                     ; hMenu
+        push    [hSysMenu]              ; hMenu
         call    InsertMenuA             ; Insert the new item
 
 ;
@@ -373,9 +413,28 @@ wmsyscommand:   ; A command in window menu is selected
         jne     defwndproc
 
 scabout:        ; 'About' command is selected
+        mov     al, [bAboutLoaded]
+        or      al, al
+        jnz     about_loaded
+
+        push    L ABOUT_TITLE_BUF       ; cchBufferMax
+        push    offset szAboutTitle     ; lpBuffer
+        push    L IDS_ABOUT_TITLE       ; uID
+        push    [hInst]
+        call    LoadStringA
+
+        push    L ABOUT_INFO_BUF        ; cchBufferMax
+        push    offset szAboutInfo      ; lpBuffer
+        push    L IDS_ABOUT_INFO        ; IDS_ABOUT_INFO -> uID
+        push    [hInst]
+        call    LoadStringA
+
+        mov     [bAboutLoaded], 1
+
+about_loaded:
         push    MB_OK OR MB_ICONASTERISK
-        push    offset MenuCaption + 1  ; Skip & prefix from menu caption
-        push    offset MBInfo
+        push    offset szAboutTitle
+        push    offset szAboutInfo
         push    [newhwnd]
         call    MessageBoxA             ; Show the message with short
                                         ; description

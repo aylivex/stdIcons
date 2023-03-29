@@ -25,6 +25,7 @@ extrn            GetSystemMetrics@4:PROC
 extrn            InsertMenuA@20:PROC
 extrn            LoadCursorA@8:PROC
 extrn            LoadIconA@8:PROC
+extern           LoadStringA@16:PROC
 extrn            MessageBoxA@16:PROC
 extrn            PostQuitMessage@4:PROC
 extrn            RegisterClassA@4:PROC
@@ -48,6 +49,7 @@ GetSystemMetrics equ GetSystemMetrics@4
 InsertMenuA equ InsertMenuA@20
 LoadCursorA equ LoadCursorA@8
 LoadIconA equ LoadIconA@8
+LoadStringA equ LoadStringA@16
 MessageBoxA equ MessageBoxA@16
 PostQuitMessage equ PostQuitMessage@4
 RegisterClassA equ RegisterClassA@4

@@ -23,6 +23,7 @@ extrn            GetTextExtentPoint32A:PROC
 extrn            InsertMenuA:PROC
 extrn            LoadCursorA:PROC
 extrn            LoadIconA:PROC
+extern           LoadStringA:PROC
 extrn            MessageBoxA:PROC
 extrn            MulDiv:PROC
 extrn            PostQuitMessage:PROC

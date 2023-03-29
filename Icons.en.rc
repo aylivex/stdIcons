@@ -1,0 +1,12 @@
+﻿LANGUAGE 0x09, 0x00 ; LANG_ENGLISH, SUBLANG_NEUTRAL
+
+#pragma code_page(65001) // UTF-8
+
+// Ensure all the strings are null-terminated
+STRINGTABLE
+{
+    101, "Standard Icons\x00"
+    102, "&About"
+    103, "About"
+    104, "Standard Icons\r\nVersion 3.0, March 2023.\r\n© 1998-2023 Alexey Ivanov\x00"
+}

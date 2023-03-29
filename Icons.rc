@@ -1,0 +1,58 @@
+﻿LANGUAGE 0x00, 0x00 // LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#pragma code_page(65001) // UTF-8
+
+STRINGTABLE
+{
+    150, "Arial"
+}
+
+
+1 VERSIONINFO
+FILEVERSION 3, 0, 0, 0
+PRODUCTVERSION 3, 0, 0, 0
+FILEOS 0x00040004   // VOS_NT_WINDOWS32
+FILETYPE 0x00000001 // VFT_APP
+{
+    BLOCK "StringFileInfo"
+    {
+#ifdef RC_ENGLISH
+        BLOCK "000904E4"
+        {
+            VALUE "CompanyName", "Alexey Ivanov\000"
+            VALUE "FileDescription", "Standard Icons\000"
+            VALUE "FileVersion", "3.00\000"
+            VALUE "InternalName", "stdIcons\000"
+            VALUE "LegalCopyright", "© 1998-2023, Alexey Ivanov\000"
+            VALUE "OriginalFilename", "Icons.exe\000"
+            VALUE "ProductName", "Standard Icons\000"
+            VALUE "ProductVersion", "3.00\000"
+        }
+#endif
+
+#ifdef RC_RUSSIAN
+        BLOCK "041904E3"
+        {
+            VALUE "CompanyName", "Алексей Иванов\000"
+            VALUE "FileDescription", "Стандартные иконки\000"
+            VALUE "FileVersion", "3.00\000"
+            VALUE "InternalName", "stdIcons\000"
+            VALUE "LegalCopyright", "© 1998-2023, Алексей Иванов\000"
+            VALUE "OriginalFilename", "Icons.exe\000"
+            VALUE "ProductName", "Стандартные иконки\000"
+            VALUE "ProductVersion", "3.00\000"
+        }
+#endif
+    }
+
+    BLOCK "VarFileInfo"
+    {
+#ifdef RC_ENGLISH
+        VALUE "Translation", 0x0009, 0x04E4
+#endif
+#ifdef RC_RUSSIAN
+        VALUE "Translation", 0x419, 0x04E3
+#endif
+    }
+
+}

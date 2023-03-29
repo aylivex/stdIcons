@@ -56,9 +56,6 @@ Icon4           db 'IDI_HAND', 0
 Icon5           db 'IDI_QUESTION', 0
 Icon6           db 'IDI_WINLOGO', 0
 
-; Font family for display
-FaceName        db 'Arial', 0
-
 ALIGN 4
 
 ; Lengths of the icon IDs
@@ -676,10 +673,11 @@ UpdateFont proc uses ebx edi esi
         mov     [Font.lfWeight], 700    ; = FW_BOLD
         mov     [Font.lfCharSet], DEFAULT_CHARSET
 
-        lea     edi, Font.lfFaceName    ; Copy the font family name
-        lea     esi, FaceName
-        mov     ecx, 7                  ; The length of the font family
-        rep     movsb
+        push    L SIZE Font.lfFaceName  ; cchBufferMax
+        push    offset Font.lfFaceName  ; lpBuffer
+        push    L IDS_FONT_NAME         ; uID
+        push    [hInst]
+        call    LoadStringA
 
         push    offset Font
         call    CreateFontIndirectA     ; Create the font

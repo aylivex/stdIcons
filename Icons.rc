@@ -21,12 +21,12 @@ FILETYPE 0x00000001 // VFT_APP
         {
             VALUE "CompanyName", "Alexey Ivanov\000"
             VALUE "FileDescription", "Standard Icons\000"
-            VALUE "FileVersion", "3.00\000"
+            VALUE "FileVersion", "3.0\000"
             VALUE "InternalName", "stdIcons\000"
-            VALUE "LegalCopyright", "© 1998-2023, Alexey Ivanov\000"
+            VALUE "LegalCopyright", "© 1998-2023 Alexey Ivanov\000"
             VALUE "OriginalFilename", "Icons.exe\000"
             VALUE "ProductName", "Standard Icons\000"
-            VALUE "ProductVersion", "3.00\000"
+            VALUE "ProductVersion", "3.0\000"
         }
 #endif
 
@@ -35,12 +35,12 @@ FILETYPE 0x00000001 // VFT_APP
         {
             VALUE "CompanyName", "Алексей Иванов\000"
             VALUE "FileDescription", "Стандартные иконки\000"
-            VALUE "FileVersion", "3.00\000"
+            VALUE "FileVersion", "3.0\000"
             VALUE "InternalName", "stdIcons\000"
-            VALUE "LegalCopyright", "© 1998-2023, Алексей Иванов\000"
+            VALUE "LegalCopyright", "© 1998-2023 Алексей Иванов\000"
             VALUE "OriginalFilename", "Icons.exe\000"
             VALUE "ProductName", "Стандартные иконки\000"
-            VALUE "ProductVersion", "3.00\000"
+            VALUE "ProductVersion", "3.0\000"
         }
 #endif
     }
@@ -51,7 +51,7 @@ FILETYPE 0x00000001 // VFT_APP
         VALUE "Translation", 0x0009, 0x04E4
 #endif
 #ifdef RC_RUSSIAN
-        VALUE "Translation", 0x419, 0x04E3
+        VALUE "Translation", 0x0419, 0x04E3
 #endif
     }
 

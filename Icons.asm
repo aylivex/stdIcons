@@ -26,7 +26,11 @@ elseifdef __masm__
     include extern.masm.asm
 endif
 
-.data            ; Initialised data
+
+;
+; Initialised data
+;
+.data
 bAboutLoaded    db 0                    ; About info loaded?
 
 ;
@@ -106,11 +110,13 @@ IconWidth       dd ?
                 ; Max width of the rendered icon text
 IconMaxWidth    dd ?
 
+
 ifdef DEBUG_GRID
                 ; Brush handles to paint grid background
 brushMargin     dd ?
 brush           dd 4 dup (?)
 endif
+
 
 BASE_FONT_SIZE = 9
                 ; Handle to the font
@@ -364,6 +370,8 @@ WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lp
         je      wmcreate
         cmp     [wmsg], WM_PAINT
         je      wmpaint
+        cmp     [wmsg], 318h            ; WM_PRINTCLIENT
+        je      wmprintclient
         cmp     [wmsg], WM_SYSCOMMAND
         je      wmsyscommand
 
@@ -384,6 +392,14 @@ wmpaint:        ; Painting the window
 
         mov     eax, 0                  ; Return code for WM_PAINT
         jmp     finish
+
+wmprintclient:
+        mov     eax, [wparam]
+        call    PaintWindow
+
+        mov     eax, 0                  ; Return code for WM_PRINTCLIENT
+        jmp     finish
+
 
 wmcreate:       ; Initialise data for the window
         ; Load the icons

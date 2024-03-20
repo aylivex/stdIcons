@@ -1,4 +1,4 @@
-; Copyright (c) 1998-2023 Alexey Ivanov
+; Copyright (c) 1998-2024 Alexey Ivanov
 ;
 .386                                    ; Enable 32-bit instructions of 80386
 .model flat, stdcall                    ; Model for 32-bit apps and calling convention
@@ -31,6 +31,9 @@ endif
 ; Initialised data
 ;
 .data
+BASE_FONT_SIZE = 9
+hFont           dd 0                    ; Handle to the font
+
 bAboutLoaded    db 0                    ; About info loaded?
 
 ;
@@ -86,6 +89,9 @@ IconName        dd offset Icon1
 hInst           dd ?                    ; Handle of the module / process
 newhwnd         dd ?                    ; Window handle
 
+dpi             dd ?                    ; Current DPI
+
+ALIGN 4
 wc              WNDCLASS    <?>         ; Class of the window
 
 lppaint         PAINTSTRUCT <?>         ; Painting structure
@@ -117,10 +123,6 @@ brushMargin     dd ?
 brush           dd 4 dup (?)
 endif
 
-
-BASE_FONT_SIZE = 9
-                ; Handle to the font
-hFont           dd ?
 
 ; Margin around the window edge
 MARGIN = 8
@@ -232,6 +234,7 @@ start:
 
         mov     [newhwnd], eax          ; Save the handle to the window
 
+        mov     ebx, [dpi]              ; DPI loaded in WM_CREATE
         call    UpdateFont              ; Create the font
                                         ; eax still contains the hWnd
 
@@ -370,8 +373,12 @@ WndProc          proc uses ebx edi esi, hwnd:DWORD, wmsg:DWORD, wparam:DWORD, lp
         je      wmcreate
         cmp     [wmsg], WM_PAINT
         je      wmpaint
-        cmp     [wmsg], 318h            ; WM_PRINTCLIENT
+        cmp     [wmsg], 0318h           ; WM_PRINTCLIENT
         je      wmprintclient
+        cmp     [wmsg], 02E0h           ; WM_DPICHANGED
+        je      wmdpichanged
+        cmp     [wmsg], 02E4h           ; WM_GETDPISCALEDSIZE
+        je      wmgetdpiscaledsize
         cmp     [wmsg], WM_SYSCOMMAND
         je      wmsyscommand
 
@@ -400,8 +407,63 @@ wmprintclient:
         mov     eax, 0                  ; Return code for WM_PRINTCLIENT
         jmp     finish
 
+wmdpichanged:
+        mov     esi, [lparam]
+        ; Set the new size to the window
+        push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
+        mov     eax, (RECT PTR [esi]).rcBottom
+        mov     ebx, (RECT PTR [esi]).rcTop
+        sub     eax, ebx
+        push    eax
+        ;push    [windowHeight]
+        mov     eax, (RECT PTR [esi]).rcRight
+        mov     edx, (RECT PTR [esi]).rcLeft
+        sub     eax, edx
+        push    eax
+        ;push    [windowWidth]
+        push    ebx
+        ;push    (RECT PTR [esi]).rcTop  ; Y
+        push    edx
+        ;push    (RECT PTR [esi]).rcLeft ; X
+        push    L 0                     ; hWndInsertAfter
+        push    [hwnd]
+        call    SetWindowPos
+
+        mov     eax, 0                  ; Return code for WM_DPICHANGED
+        jmp     finish
+
+wmgetdpiscaledsize:
+        ; wparam contains a DPI value
+        ; lparam pointer to SIZE (TEXTSIZE) structure
+        mov     eax, [hwnd]             ; Pass the window handle
+        mov     ebx, [wparam]
+        and     ebx, 00FFh              ; Preserve lo word only
+        call    UpdateFont
+        mov     ebx, [wparam]
+        and     ebx, 00FFh              ; Preserve lo word only
+        call    UpdateWindowSize        ; Calculate the new window size
+
+        mov     esi, [lparam]
+        mov     eax, [windowWidth]
+        mov     (TEXTSIZE PTR [esi]).tcx, eax
+        mov     eax, [windowHeight]
+        mov     (TEXTSIZE PTR [esi]).tcy, eax
+
+        mov     eax, 1                  ; The new size is calculated
+        jmp     finish
 
 wmcreate:       ; Initialise data for the window
+        push    [hwnd]
+        call    GetDpiForWindow
+        mov     [dpi], eax
+
+        push    eax
+        push    L 11 ; SM_CXICON
+        call    GetSystemMetricsForDpi
+
+        mov     [IconWidth], eax
+        mov     esi, eax
+
         ; Load the icons
         mov     ecx, ICON_NUM           ; Number of icons
         mov     ebx, 0                  ; Index (offset in arrays)
@@ -410,8 +472,16 @@ CreateIcon:
 
         push    IconNames[ebx]          ; ID of the icon to load
         push    L 0                     ; hInstance
-        call    LoadIconA               ; Load the icon
+        call    LoadIconA              ; Load the icon
         mov     hIcons[ebx], eax        ; Save the icon handle
+
+        push    L 40h                     ; LR_DEFAULTCOLOR
+        push    esi                     ; cy
+        push    esi                     ; cx
+        push    L 1                     ; IMAGE_ICON
+        push    IconNames[ebx]          ; ID of the icon to load
+        push    L 0                     ; hInstance
+        call    LoadImageA@24              ; Load the icon
 
         pop     ecx                     ; Restore the register
 
@@ -654,6 +724,7 @@ PaintWindow endp
 ; Creates the font and measures the text
 ;
 ; eax contains the window handle
+; ebx contains the DPI or zero
 UpdateFont proc uses ebx edi esi
         LOCAL   hWnd: DWORD
         LOCAL   hDC: DWORD
@@ -661,21 +732,26 @@ UpdateFont proc uses ebx edi esi
 
         mov     [hWnd], eax
 
+        ; Get DPI from DC
         push    eax                     ; eax = hWnd
         call    GetDC
         mov     [hDC], eax
 
-        push    L 90                    ; = LOGPIXELSY
-        push    eax
-        call    GetDeviceCaps
-
         push    L 72
-        push    eax
+        push    ebx
         push    BASE_FONT_SIZE
         call    MulDiv
         neg     eax
-        mov     edx, eax                ; edx stores the height of the font
+        mov     esi, eax                ; esi stores the height of the font
 
+        mov     eax, [hFont]
+        or      eax, eax
+        jz      no_font
+
+        push    eax                     ; Delete the old font handle
+        call    DeleteObject
+
+no_font:
         ; Create the font
         mov     edi, offset Font        ; Zero LOGFONT structure
         mov     ecx, TYPE Font
@@ -683,7 +759,7 @@ UpdateFont proc uses ebx edi esi
         xor     al, al
         rep     stosb
 
-        mov     [Font.lfHeight], edx
+        mov     [Font.lfHeight], esi
         mov     [Font.lfOrientation], 900
         mov     [Font.lfEscapement], 900
         mov     [Font.lfWeight], 700    ; = FW_BOLD
@@ -743,9 +819,11 @@ UpdateFont endp
 
 ;-----------------------------------------------------------------------------
 ; Calculates the window size
+; ebx -> dpi
 UpdateWindowSize proc
+        push    ebx
         push    L 11 ; SM_CXICON
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         mov     [IconWidth], eax
 
@@ -766,8 +844,9 @@ UpdateWindowSize proc
 
         push    eax
 
+        push    ebx
         push    L 8 ; SM_CXFIXEDFRAME
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         ;       + SM_CXFIXEDFRAME * 2
         mov     edx, eax
@@ -777,8 +856,9 @@ UpdateWindowSize proc
 
         push    eax
 
+        push    ebx
         push    L 45 ; SM_CXEDGE
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         ;       + SM_CXEDGE * 2
         mov     edx, eax
@@ -809,16 +889,18 @@ nextWidth:
         mov     [IconMaxWidth], edx
         push    edx
 
+        push    ebx
         push    L 4 ; SM_CYCAPTION
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         ;       + SM_CYCAPTION
         pop     edx
         add     edx, eax
         push    edx
 
+        push    ebx
         push    L 8 ; SM_CYFIXEDFRAME
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         ;       + SM_CYFIXEDFRAME * 2
         pop     edx
@@ -826,8 +908,9 @@ nextWidth:
         add     edx, eax
         push    edx
 
+        push    ebx
         push    L 46 ; SM_CYEDGE
-        call    GetSystemMetrics
+        call    GetSystemMetricsForDpi
 
         ;       + SM_CYEDGE * 2
         pop     edx

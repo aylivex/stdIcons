@@ -55,4 +55,4 @@ Icons.manifest.res: Icons.exe.manifest Icons.manifest.rc
   rc /foIcons.manifest.res /n /x Icons.manifest.rc
 
 .asm.obj:
-  ml /c /Cp /coff /WX /D__masm__ $(MASMDEBUG) /I$(INCLUDEPATH) $<
+  ml /c /Cp /coff /WX /D__masm__ /DDEBUG_GRID $(MASMDEBUG) /I$(INCLUDEPATH) $<

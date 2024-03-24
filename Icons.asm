@@ -63,6 +63,9 @@ Icon4           db 'IDI_HAND', 0
 Icon5           db 'IDI_QUESTION', 0
 Icon6           db 'IDI_WINLOGO', 0
 
+szComCtl32DLL   db 'comctl32.dll', 0
+szLoadIconWithScaleDown db 'LoadIconWithScaleDown', 0
+
 ALIGN 4
 
 ; Lengths of the icon IDs
@@ -115,6 +118,9 @@ IconWidth       dd ?
 
                 ; Max width of the rendered icon text
 IconMaxWidth    dd ?
+
+hComCtlLib      dd ?
+LoadIconWithScaleDown dd ?
 
 
 ifdef DEBUG_GRID
@@ -214,6 +220,22 @@ start:
         push    [hInst]
         call    LoadStringA
 
+        push    L 00000800h             ; LOAD_LIBRARY_SEARCH_SYSTEM32
+        push    L 0
+        push    L offset szComCtl32DLL
+        call    LoadLibraryExA
+
+        mov     [hComCtlLib], eax
+
+        or      eax, eax
+        jz      createWindow
+
+        push    L offset szLoadIconWithScaleDown
+        push    eax
+        call    GetProcAddress
+        mov     [LoadIconWithScaleDown], eax
+
+createWindow:
 ;
 ; Create window
 ;
@@ -443,6 +465,10 @@ wmgetdpiscaledsize:
         and     ebx, 00FFh              ; Preserve lo word only
         call    UpdateWindowSize        ; Calculate the new window size
 
+        call    DestroyIcons
+        mov     esi, [IconWidth]
+        call    LoadIcons
+
         mov     esi, [lparam]
         mov     eax, [windowWidth]
         mov     (TEXTSIZE PTR [esi]).tcx, eax
@@ -464,31 +490,9 @@ wmcreate:       ; Initialise data for the window
         mov     [IconWidth], eax
         mov     esi, eax
 
-        ; Load the icons
-        mov     ecx, ICON_NUM           ; Number of icons
-        mov     ebx, 0                  ; Index (offset in arrays)
-CreateIcon:
-        push    ecx                     ; Preserve the register
+        call    LoadIcons
 
-        push    IconNames[ebx]          ; ID of the icon to load
-        push    L 0                     ; hInstance
-        call    LoadIconA              ; Load the icon
-        mov     hIcons[ebx], eax        ; Save the icon handle
-
-        push    L 40h                     ; LR_DEFAULTCOLOR
-        push    esi                     ; cy
-        push    esi                     ; cx
-        push    L 1                     ; IMAGE_ICON
-        push    IconNames[ebx]          ; ID of the icon to load
-        push    L 0                     ; hInstance
-        call    LoadImageA@24              ; Load the icon
-
-        pop     ecx                     ; Restore the register
-
-        add     ebx, 4                  ; Next offset in arrays
-        loop    CreateIcon
-
-        mov     eax, 0                  ; Return code for WM_PAINT
+        mov     eax, 0                  ; Return code for WM_CREATE
         jmp     finish
 
 wmsyscommand:   ; A command in window menu is selected
@@ -542,6 +546,64 @@ wmdestroy:      ; Destroy the window and exit the message loop
 finish:
         ret
 WndProc         endp
+
+;-----------------------------------------------------------------------------
+; esi = size of the icon
+; ebx is used; calling function must preserve ebx
+LoadIcons proc
+        mov     eax, [LoadIconWithScaleDown]
+        test    eax, eax
+        ; Use LoadIcons_with_LoadIcon if LoadIconWithScaleDown not available
+        jz      LoadIcons_with_LoadIcon
+
+        mov     ebx, ICON_NUM
+loadLoop:
+        dec     ebx
+
+        lea     eax, hIcons[ebx*4]
+        push    eax                     ; phIcon
+        push    esi                     ; cy
+        push    esi                     ; cx
+        push    IconNames[ebx*4]        ; pszName
+        push    L 0                     ; hInstance
+        call    [LoadIconWithScaleDown]
+
+        test    ebx, ebx
+        jnz     loadLoop
+
+        ret
+LoadIcons endp
+
+LoadIcons_with_LoadIcon proc
+        mov     ebx, ICON_NUM
+loadLoop:
+        dec     ebx
+
+        push    IconNames[ebx*4]        ; ID of the icon to load
+        push    L 0                     ; hInstance
+        call    LoadIconA               ; Load the icon
+        mov     hIcons[ebx*4], eax      ; Save the icon handle
+
+        test    ebx, ebx
+        jnz     loadLoop
+
+        ret
+LoadIcons_with_LoadIcon endp
+
+; ebx is used; calling function must preserve ebx
+DestroyIcons proc
+        mov     ebx, ICON_NUM
+destroyLoop:
+        dec     ebx
+
+        push    hIcons[ebx*4]           ; hIcon to destroy
+        call    DestroyIcon             ; Destroy the icon
+
+        test    ebx, ebx
+        jnz     destroyLoop
+
+        ret
+DestroyIcons endp
 
 ;-----------------------------------------------------------------------------
 ; theDC is passed in eax
@@ -653,11 +715,16 @@ DrawIcons:
         push    ecx                     ; Preserve the registers
         push    edx
 
+        push    L 0003h                 ; diFlags = DI_NORMAL = DI_IMAGE(2) | DI_MASK(1)
+        push    L 0                     ; hbrFlickerFreeDraw
+        push    L 0                     ; istepIfAniCur
+        push    L 0                     ; cyWidth
+        push    L 0                     ; cxWidth
         push    hIcons[ebx]             ; Handle of the icon
         push    L MARGIN                ; y
         push    edx                     ; x
         push    [theDC]                 ; Device context
-        call    DrawIcon                ; Draw the icon on the screen
+        call    DrawIconEx              ; Draw the icon on the screen
 
         pop     edx                     ; Restore the registers
         pop     ecx

@@ -4,10 +4,14 @@
 
 extrn            ExitProcess@4:PROC
 extrn            GetModuleHandleA@4:PROC
+extrn            GetProcAddress@8:PROC
+extrn            LoadLibraryExA@12:PROC
 extrn            MulDiv@12:PROC
 
 ExitProcess equ ExitProcess@4
 GetModuleHandleA equ GetModuleHandleA@4
+GetProcAddress equ GetProcAddress@8
+LoadLibraryExA equ LoadLibraryExA@12
 MulDiv equ MulDiv@12
 
 
@@ -15,7 +19,9 @@ extrn            BeginPaint@8:PROC
 extrn            CreateWindowExA@48:PROC
 extrn            DefWindowProcA@16:PROC
 extrn            DispatchMessageA@4:PROC
+extrn            DestroyIcon@4:PROC
 extrn            DrawIcon@16:PROC
+extrn            DrawIconEx@36:PROC
 extrn            EnableMenuItem@12:PROC
 extrn            EndPaint@8:PROC
 extrn            GetMessageA@16:PROC
@@ -41,7 +47,9 @@ BeginPaint equ BeginPaint@8
 CreateWindowExA equ CreateWindowExA@48
 DefWindowProcA equ DefWindowProcA@16
 DispatchMessageA equ DispatchMessageA@4
+DestroyIcon equ DestroyIcon@4
 DrawIcon equ DrawIcon@16
+DrawIconEx equ DrawIconEx@36
 EnableMenuItem equ EnableMenuItem@12
 EndPaint equ EndPaint@8
 

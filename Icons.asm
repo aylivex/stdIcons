@@ -63,8 +63,14 @@ Icon4           db 'IDI_HAND', 0
 Icon5           db 'IDI_QUESTION', 0
 Icon6           db 'IDI_WINLOGO', 0
 
+; Functions from comctl32.dll (since Windows Vista)
 szComCtl32DLL   db 'comctl32.dll', 0
-szLoadIconWithScaleDown db 'LoadIconWithScaleDown', 0
+szLoadIconWithScaleDown         db 'LoadIconWithScaleDown', 0
+
+; Functions from user32.dll (since Windows 10 version 1607)
+szUser32DLL     db 'user32.dll', 0
+szGetDpiForWindow               db 'GetDpiForWindow', 0
+szGetSystemMetricsForDpi        db 'GetSystemMetricsForDpi', 0
 
 ALIGN 4
 
@@ -119,8 +125,11 @@ IconWidth       dd ?
                 ; Max width of the rendered icon text
 IconMaxWidth    dd ?
 
-hComCtlLib      dd ?
-LoadIconWithScaleDown dd ?
+hComCtlLib              dd ?
+LoadIconWithScaleDown   dd ?
+
+GetDpiForWindow         dd ?
+GetSystemMetricsForDpi  dd ?
 
 
 ifdef DEBUG_GRID
@@ -220,6 +229,7 @@ start:
         push    [hInst]
         call    LoadStringA
 
+        ; Find if LoadIconWithScaleDown is available
         push    L 00000800h             ; LOAD_LIBRARY_SEARCH_SYSTEM32
         push    L 0
         push    L offset szComCtl32DLL
@@ -228,12 +238,32 @@ start:
         mov     [hComCtlLib], eax
 
         or      eax, eax
-        jz      createWindow
+        jz      getUser32
 
         push    L offset szLoadIconWithScaleDown
         push    eax
         call    GetProcAddress
         mov     [LoadIconWithScaleDown], eax
+
+getUser32:
+        ; Find if -ForDpi functions are available
+        push    L offset szUser32DLL
+        call    GetModuleHandleA
+
+        or      eax, eax
+        jz      createWindow
+
+        mov     ebx, eax
+        push    L offset szGetDpiForWindow
+        push    ebx
+        call    GetProcAddress
+        mov     [GetDpiForWindow], eax
+
+        push    L offset szGetSystemMetricsForDpi
+        push    ebx
+        call    GetProcAddress
+        mov     [GetSystemMetricsForDpi], eax
+
 
 createWindow:
 ;
@@ -479,14 +509,36 @@ wmgetdpiscaledsize:
         jmp     finish
 
 wmcreate:       ; Initialise data for the window
+        cmp     [GetDpiForWindow], 0
+        je      getDPI
+
         push    [hwnd]
-        call    GetDpiForWindow
+        call    [GetDpiForWindow]
         mov     [dpi], eax
 
         push    eax
         push    L 11 ; SM_CXICON
-        call    GetSystemMetricsForDpi
+        call    [GetSystemMetricsForDpi]
+        jmp     getIconWidth
 
+getDPI:
+        push    [hwnd]
+        call    GetDC
+        mov     ebx, eax                ; Save hDC in ebx
+
+        push    L 90                    ; = LOGPIXELSY
+        push    ebx                     ; hDC from prev
+        call    GetDeviceCaps
+
+        mov     [dpi], eax
+
+        push    ebx
+        call    ReleaseDC
+
+        push    L 11 ; SM_CXICON
+        call    GetSystemMetrics
+
+getIconWidth:
         mov     [IconWidth], eax
         mov     esi, eax
 
@@ -888,14 +940,76 @@ UpdateFont endp
 ; Calculates the window size
 ; ebx -> dpi
 UpdateWindowSize proc
+        LOCAL   cxFixedFrame    : DWORD
+        LOCAL   cxEdge          : DWORD
+        LOCAL   cyFixedFrame    : DWORD
+        LOCAL   cyEdge          : DWORD
+        LOCAL   cyCaption       : DWORD
+
+        cmp     [GetSystemMetricsForDpi], 0
+        je      stdMetrics
+
+        ; Use -ForDpi metrics
         push    ebx
         push    L 11 ; SM_CXICON
-        call    GetSystemMetricsForDpi
-
+        call    [GetSystemMetricsForDpi]
         mov     [IconWidth], eax
 
+        push    ebx
+        push    L 8 ; SM_CXFIXEDFRAME
+        call    [GetSystemMetricsForDpi]
+        mov     [cxFixedFrame], eax
+
+        push    ebx
+        push    L 45 ; SM_CXEDGE
+        call    [GetSystemMetricsForDpi]
+        mov     [cxEdge], eax
+
+        push    ebx
+        push    L 8 ; SM_CYFIXEDFRAME
+        call    [GetSystemMetricsForDpi]
+        mov     [cyFixedFrame], eax
+
+        push    ebx
+        push    L 46 ; SM_CYEDGE
+        call    [GetSystemMetricsForDpi]
+        mov     [cyEdge], eax
+
+        push    ebx
+        push    L 4 ; SM_CYCAPTION
+        call    [GetSystemMetricsForDpi]
+        mov     [cyCaption], eax
+
+        jmp     calcWidth
+stdMetrics:
+        push    L 11 ; SM_CXICON
+        call    GetSystemMetrics
+        mov     [IconWidth], eax
+
+        push    L 8 ; SM_CXFIXEDFRAME
+        call    GetSystemMetrics
+        mov     [cxFixedFrame], eax
+
+        push    L 45 ; SM_CXEDGE
+        call    GetSystemMetrics
+        mov     [cxEdge], eax
+
+        push    L 8 ; SM_CYFIXEDFRAME
+        call    GetSystemMetrics
+        mov     [cyFixedFrame], eax
+
+        push    L 46 ; SM_CYEDGE
+        call    GetSystemMetrics
+        mov     [cyEdge], eax
+
+        push    L 4 ; SM_CYCAPTION
+        call    GetSystemMetrics
+        mov     [cyCaption], eax
+
+calcWidth:
         ; width = (IconTextHeight + TEXT_ICON_GAP
-        ;         + IconWidth (= eax) + ICONS_GAP) * ICON_NUM  
+        ;         + IconWidth + ICONS_GAP) * ICON_NUM
+        mov     eax, [IconWidth]
         add     eax, [IconTextHeight]
         add     eax, TEXT_ICON_GAP
         add     eax, ICONS_GAP
@@ -904,33 +1018,13 @@ UpdateWindowSize proc
         ;       - ICONS_GAP (there's no ICONS_GAP after the last one)
         sub     eax, ICONS_GAP
 
-        ;       + MARGIN * 2
+        ; edx = MARGIN + SM_CXFIXEDFRAME + SM_CXEDGE
         mov     edx, MARGIN
+        add     edx, [cxFixedFrame]
+        add     edx, [cxEdge]
+
+        ; edx * 2
         shl     edx, 1
-        add     eax, edx
-
-        push    eax
-
-        push    ebx
-        push    L 8 ; SM_CXFIXEDFRAME
-        call    GetSystemMetricsForDpi
-
-        ;       + SM_CXFIXEDFRAME * 2
-        mov     edx, eax
-        shl     edx, 1
-        pop     eax
-        add     eax, edx
-
-        push    eax
-
-        push    ebx
-        push    L 45 ; SM_CXEDGE
-        call    GetSystemMetricsForDpi
-
-        ;       + SM_CXEDGE * 2
-        mov     edx, eax
-        shl     edx, 1
-        pop     eax
         add     eax, edx
 
         mov     [windowWidth], eax
@@ -954,39 +1048,19 @@ nextWidth:
 
         ; height = IconMaxWidth ...
         mov     [IconMaxWidth], edx
-        push    edx
 
-        push    ebx
-        push    L 4 ; SM_CYCAPTION
-        call    GetSystemMetricsForDpi
+        ; eax = SM_CYFIXEDFRAME + SM_CYEDGE + MARGIN
+        mov     eax, [cyFixedFrame]
+        add     eax, [cyEdge]
+        add     eax, MARGIN
 
-        ;       + SM_CYCAPTION
-        pop     edx
-        add     edx, eax
-        push    edx
-
-        push    ebx
-        push    L 8 ; SM_CYFIXEDFRAME
-        call    GetSystemMetricsForDpi
-
-        ;       + SM_CYFIXEDFRAME * 2
-        pop     edx
+        ; eax * 2
         shl     eax, 1
-        add     edx, eax
-        push    edx
 
-        push    ebx
-        push    L 46 ; SM_CYEDGE
-        call    GetSystemMetricsForDpi
+        ; eax += SM_CYCAPTION
+        add     eax, [cyCaption]
 
-        ;       + SM_CYEDGE * 2
-        pop     edx
-        shl     eax, 1
-        add     edx, eax
-
-        ;       + MARGIN * 2
-        mov     eax, MARGIN
-        shl     eax, 1
+        ; (edx = [IconMaxWidth]) + (eax = [frame_height])
         add     edx, eax
 
         mov     [windowHeight], edx

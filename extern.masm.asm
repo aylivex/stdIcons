@@ -28,8 +28,6 @@ extrn            GetMessageA@16:PROC
 extrn            GetSysColor@4:PROC
 extrn            GetSystemMenu@8:PROC
 extrn            GetSystemMetrics@4:PROC
-extrn            GetSystemMetricsForDpi@8:PROC
-extern           GetDpiForWindow@4:PROC
 extrn            InsertMenuA@20:PROC
 extrn            LoadCursorA@8:PROC
 extrn            LoadIconA@8:PROC
@@ -57,8 +55,6 @@ GetMessageA equ GetMessageA@16
 GetSysColor equ GetSysColor@4
 GetSystemMenu equ GetSystemMenu@8
 GetSystemMetrics equ GetSystemMetrics@4
-GetSystemMetricsForDpi equ GetSystemMetricsForDpi@8
-GetDpiForWindow equ GetDpiForWindow@4
 InsertMenuA equ InsertMenuA@20
 LoadCursorA equ LoadCursorA@8
 LoadIconA equ LoadIconA@8

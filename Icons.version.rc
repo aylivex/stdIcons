@@ -1,0 +1,70 @@
+﻿LANGUAGE 0x00, 0x00 // LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#pragma code_page(65001) // UTF-8
+
+
+// https://learn.microsoft.com/en-us/windows/win32/api/verrsrc/ns-verrsrc-vs_fixedfileinfo
+
+1 VERSIONINFO
+FILEVERSION 3, 0, 0, 0
+PRODUCTVERSION 3, 0, 0, 0
+#ifdef DEBUG
+FILEFLAGS 0x00000001 | 0x00000002 | 0x00000008 // VS_FF_DEBUG | VS_FF_PRERELEASE | VS_FF_PRIVATEBUILD
+#else
+FILEFLAGS 0x00000001
+#endif
+FILEOS 0x00050004   // VOS__WINDOWS32=0x00000004 | (VOS_DOS=0x00010000 | VOS_NT=0x00040000)
+FILETYPE 0x00000001 // VFT_APP
+{
+    BLOCK "StringFileInfo"
+    {
+#ifdef RC_ENGLISH
+        BLOCK "000904E4"
+        {
+            VALUE "CompanyName", "Alexey Ivanov\000"
+            VALUE "FileDescription", "Standard Icons\000"
+            VALUE "FileVersion", "3.0\000"
+            VALUE "InternalName", "stdIcons\000"
+            VALUE "LegalCopyright", "© 1998-2023 Alexey Ivanov\000"
+            VALUE "OriginalFilename", "Icons.exe\000"
+            VALUE "ProductName", "Standard Icons\000"
+            VALUE "ProductVersion", "3.0\000"
+            #ifdef DEBUG
+            VALUE "PrivateBuild", "Pre-release debug version\000"
+            #endif
+        }
+#endif
+
+#ifdef RC_RUSSIAN
+        BLOCK "041904E3"
+        {
+            VALUE "CompanyName", "Алексей Иванов\000"
+            VALUE "FileDescription", "Стандартные иконки\000"
+            VALUE "FileVersion", "3.0\000"
+            VALUE "InternalName", "stdIcons\000"
+            VALUE "LegalCopyright", "© 1998-2023 Алексей Иванов\000"
+            VALUE "OriginalFilename", "Icons.exe\000"
+            VALUE "ProductName", "Стандартные иконки\000"
+            VALUE "ProductVersion", "3.0\000"
+            #ifdef DEBUG
+            VALUE "PrivateBuild", "Отладочная версия\000"
+            #endif
+        }
+#endif
+    }
+
+    BLOCK "VarFileInfo"
+    {
+#if defined(RC_ENGLISH) && defined (RC_RUSSIAN)
+        VALUE "Translation", 0x0009, 0x04E4, 0x0419, 0x04E3
+#else
+    #ifdef RC_ENGLISH
+        VALUE "Translation", 0x0009, 0x04E4
+    #endif
+    #ifdef RC_RUSSIAN
+        VALUE "Translation", 0x0419, 0x04E3
+    #endif
+#endif
+    }
+
+}

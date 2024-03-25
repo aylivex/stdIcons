@@ -1,5 +1,5 @@
 #   Makefile for MASM Icons
-#   Copyright (c) 2023 Alexey Ivanov
+#   Copyright (c) 2023-2024 Alexey Ivanov
 
 #   nmake /f mkMasm.gmk            Will build Icons.exe
 #   nmake /f mkMasm.gmk DEBUG=     Will build the debug version of Icons.exe
@@ -13,11 +13,17 @@ LIBS = kernel32.lib user32.lib gdi32.lib
 VERSION = 3.0
 
 !ifdef DEBUG
-MASMDEBUG=/Zi
+MASMDEBUG=/DDEBUG_GRID /Zi
 LINKDEBUG=/debug:full
 !else
 MASMDEBUG=
 LINKDEBUG=/release
+!endif
+
+!ifdef LISTING
+MASMLISTING=/Fl
+!else
+MASMLISTING=
 !endif
 
 RESFILES = Icons.res Icons.manifest.res

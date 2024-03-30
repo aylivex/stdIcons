@@ -1,5 +1,4 @@
 {
-    "makefile.makefilePath": "mkMasm.gmk",
     "makefile.alwaysPreConfigure": "true",
     "makefile.configurations": [
         {

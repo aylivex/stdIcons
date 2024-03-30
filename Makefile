@@ -1,33 +1,43 @@
-#   Makefile for Icons
-#   Copyright (c) 1998-2024 Alexey Ivanov
+#   Makefile for MASM Icons
+#   Copyright (c) 2023-2024 Alexey Ivanov
 
-#       make -B                 Will build Icons.exe
-#       make -B -DDEBUG         Will build the debug version of Icons.exe
+#   nmake /f mkMasm.gmk            Will build Icons.exe
+#   nmake /f mkMasm.gmk DEBUG=     Will build the debug version of Icons.exe
+#
+#   INCLUDEPATH specifies path to include files (win32.inc)
 
-NAME   = Icons
-EXE    = $(NAME).exe
-EXE    = $(NAME).exe
+NAME = Icons
+EXE  = $(NAME).exe
 EXE_EN = $(NAME).en.exe
 EXE_RU = $(NAME).ru.exe
-OBJS   = $(NAME).obj
+OBJS = $(NAME).obj
+LIBS = kernel32.lib user32.lib gdi32.lib
+VERSION = 3.0
 
-IMPORT = import32
-
-!if $d(DEBUG)
-TASMDEBUG=/zi
-LINKDEBUG=/v
+!ifdef DEBUG
+MASMDEBUG=/DDEBUG_GRID /Zi
+LINKDEBUG=/debug:full
 RCDEBUG=/dDEBUG
 !else
-TASMDEBUG=
-LINKDEBUG=
+MASMDEBUG=
+LINKDEBUG=/release
 RCDEBUG=
 !endif
 
+!ifdef LISTING
+MASMLISTING=/Fl
+!else
+MASMLISTING=
+!endif
 
-RESFILES = resource\merged.en-ru.res
+RESFILES = resource\Icons.res resource\Icons.en.res resource\Icons.ru.res resource\Icons.version.en-ru.res resource\Icons.manifest.res
 
-RESFILES_EN = resource\merged.en.res
-RESFILES_RU = resource\merged.ru.res
+RESFILES_RU = resource\Icons.res resource\Icons.ru.res resource\Icons.version.ru.res resource\Icons.manifest.res
+RESFILES_EN = resource\Icons.res resource\Icons.en.res resource\Icons.version.en.res resource\Icons.manifest.res
+
+RC_OPTIONS_EN=$(RCDEBUG) /dRC_ENGLISH
+RC_OPTIONS_RU=$(RCDEBUG) /dRC_RUSSIAN
+RC_OPTIONS_EN_RU=$(RCDEBUG) /dRC_ENGLISH /dRC_RUSSIAN
 
 
 main: $(EXE)
@@ -35,27 +45,38 @@ main: $(EXE)
 all: $(EXE) $(EXE_EN) $(EXE_RU)
 
 $(EXE): $(OBJS) $(RESFILES)
-  tlink32 /Tpe /aa /c /M /s /m $(LINKDEBUG) /L$(LIBPATH) $(OBJS),$(EXE),, $(IMPORT), ,$(RESFILES)
+  link /map:$(NAME).map /out:$(EXE) /noimplib /noexp /subsystem:windows,5.01 /version:$(VERSION) /nxcompat $(LINKDEBUG)  $(OBJS) $(LIBS) $(RESFILES)
 
 $(EXE_EN): $(OBJS) $(RESFILES_EN)
-  tlink32 /Tpe /aa /c /M /s /m $(LINKDEBUG) /L$(LIBPATH) $(OBJS),$(EXE_EN),, $(IMPORT), ,$(RESFILES_EN)
+  link /map:$(NAME).en.map /out:$(EXE_EN) /noimplib /noexp /subsystem:windows,5.01 /version:$(VERSION) /nxcompat $(LINKDEBUG)  $(OBJS) $(LIBS) $(RESFILES_EN)
 
 $(EXE_RU): $(OBJS) $(RESFILES_RU)
-  tlink32 /Tpe /aa /c /M /s /m $(LINKDEBUG) /L$(LIBPATH) $(OBJS),$(EXE_RU),, $(IMPORT), ,$(RESFILES_RU)
+  link /map:$(NAME).ru.map /out:$(EXE_RU) /noimplib /noexp /subsystem:windows,5.01 /version:$(VERSION) /nxcompat $(LINKDEBUG)  $(OBJS) $(LIBS) $(RESFILES_RU)
+
+Icons.asm: extern.masm.asm
 
 
-resource\merged.en-ru.res: resource\merged.en-ru.rc
-   brcc32 $(RCDEBUG) resource\merged.en-ru.rc
+resource\Icons.res: resource\Icons.rc
+  rc /foresource\Icons.res $(RC_OPTIONS) /n /x resource\Icons.rc
 
-resource\merged.en.res: resource\merged.en.rc
-   brcc32 $(RCDEBUG) resource\merged.en.rc
+resource\Icons.en.res: resource\Icons.en.rc
+  rc /foresource\Icons.en.res /n /x resource\Icons.en.rc
 
-resource\merged.ru.res: resource\merged.ru.rc
-   brcc32 $(RCDEBUG) resource\merged.ru.rc
+resource\Icons.ru.res: resource\Icons.ru.rc
+  rc /foresource\Icons.ru.res /n /x resource\Icons.ru.rc
+
+resource\Icons.version.en.res: resource\Icons.version.rc
+  rc /foresource\Icons.version.en.res $(RC_OPTIONS_EN) /n /x resource\Icons.version.rc
+
+resource\Icons.version.ru.res: resource\Icons.version.rc
+  rc /foresource\Icons.version.ru.res $(RC_OPTIONS_RU) /n /x resource\Icons.version.rc
+
+resource\Icons.version.en-ru.res: resource\Icons.version.rc
+  rc /foresource\Icons.version.en-ru.res $(RC_OPTIONS_EN_RU) /n /x resource\Icons.version.rc
+
+resource\Icons.manifest.res: resource\Icons.exe.manifest resource\Icons.manifest.rc
+  rc /foresource\Icons.manifest.res /n /x resource\Icons.manifest.rc
 
 
 .asm.obj:
-   tasm32 /D__tasm__ $(TASMDEBUG) /i$(INCLUDEPATH) /ml $&.asm
-
-.rc.res:
-   brcc32 $(RCDEBUG) $&.rc
+  ml /c /Cp /coff /WX /D__masm__ $(MASMDEBUG) $(MASMLISTING) /I$(INCLUDEPATH) $<

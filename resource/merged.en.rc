@@ -1,0 +1,5 @@
+#include "Icons.rc"
+#define RC_ENGLISH
+#include "Icons.version.rc"
+#include "Icons.en.rc"
+#include "Icons.manifest.rc"

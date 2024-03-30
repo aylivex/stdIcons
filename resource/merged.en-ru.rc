@@ -1,0 +1,7 @@
+#include "Icons.rc"
+#define RC_ENGLISH
+#define RC_RUSSIAN
+#include "Icons.version.rc"
+#include "Icons.en.rc"
+#include "Icons.ru.rc"
+#include "Icons.manifest.rc"

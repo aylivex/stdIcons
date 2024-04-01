@@ -1,0 +1,8 @@
+LANGUAGE 0x00, 0x00 // LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+#pragma code_page(65001) // UTF-8
+
+STRINGTABLE
+{
+    150, "Arial"
+}

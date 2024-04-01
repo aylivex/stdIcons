@@ -4,4 +4,7 @@
 *.map
 *.pdb
 *.ilk
+*.sln
+*.exe.txt
 .vs/
+tmp/

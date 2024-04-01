@@ -1,17 +1,19 @@
-﻿LANGUAGE 0x00, 0x00 // LANG_NEUTRAL, SUBLANG_NEUTRAL
+LANGUAGE 0x00, 0x00 // LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #pragma code_page(65001) // UTF-8
 
-STRINGTABLE
-{
-    150, "Arial"
-}
 
+// https://learn.microsoft.com/en-us/windows/win32/api/verrsrc/ns-verrsrc-vs_fixedfileinfo
 
 1 VERSIONINFO
 FILEVERSION 3, 0, 0, 0
 PRODUCTVERSION 3, 0, 0, 0
-FILEOS 0x00040004   // VOS_NT_WINDOWS32
+#ifdef DEBUG
+FILEFLAGS 0x00000001 | 0x00000002 | 0x00000008 // VS_FF_DEBUG | VS_FF_PRERELEASE | VS_FF_PRIVATEBUILD
+#else
+FILEFLAGS 0x00000001
+#endif
+FILEOS 0x00050004   // VOS__WINDOWS32=0x00000004 | (VOS_DOS=0x00010000 | VOS_NT=0x00040000)
 FILETYPE 0x00000001 // VFT_APP
 {
     BLOCK "StringFileInfo"
@@ -27,6 +29,9 @@ FILETYPE 0x00000001 // VFT_APP
             VALUE "OriginalFilename", "Icons.exe\000"
             VALUE "ProductName", "Standard Icons\000"
             VALUE "ProductVersion", "3.0\000"
+            #ifdef DEBUG
+            VALUE "PrivateBuild", "Pre-release debug version\000"
+            #endif
         }
 #endif
 
@@ -41,17 +46,24 @@ FILETYPE 0x00000001 // VFT_APP
             VALUE "OriginalFilename", "Icons.exe\000"
             VALUE "ProductName", "Стандартные иконки\000"
             VALUE "ProductVersion", "3.0\000"
+            #ifdef DEBUG
+            VALUE "PrivateBuild", "Отладочная версия\000"
+            #endif
         }
 #endif
     }
 
     BLOCK "VarFileInfo"
     {
-#ifdef RC_ENGLISH
+#if defined(RC_ENGLISH) && defined (RC_RUSSIAN)
+        VALUE "Translation", 0x0009, 0x04E4, 0x0419, 0x04E3
+#else
+    #ifdef RC_ENGLISH
         VALUE "Translation", 0x0009, 0x04E4
-#endif
-#ifdef RC_RUSSIAN
+    #endif
+    #ifdef RC_RUSSIAN
         VALUE "Translation", 0x0419, 0x04E3
+    #endif
 #endif
     }
 

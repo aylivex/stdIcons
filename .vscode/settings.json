@@ -1,0 +1,27 @@
+{
+    "makefile.alwaysPreConfigure": "true",
+    "makefile.configurations": [
+        {
+            "name": "Release",
+            "makeArgs": [
+                "INCLUDEPATH=C:\\devtools\\assembler\\tasm\\include"
+            ]
+
+        },
+        {
+            "name": "Debug",
+            "makeArgs": [
+                "DEBUG=",
+                "DEBUG_GRID=",
+                "INCLUDEPATH=C:\\devtools\\assembler\\tasm\\include"
+            ]
+        }
+    ],
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "binaryPath": "${workspaceFolder}\\Icons.exe",
+            "binaryArgs": []
+        }
+    ]
+}

@@ -24,6 +24,8 @@ ifdef __tasm__
     include extern.tasm.asm
 elseifdef __masm__
     include extern.masm.asm
+    extern OutputDebugStringA@4 : proc
+    OutputDebugStringA equ OutputDebugStringA@4
 endif
 
 
@@ -71,6 +73,12 @@ szLoadIconWithScaleDown         db 'LoadIconWithScaleDown', 0
 szUser32DLL     db 'user32.dll', 0
 szGetDpiForWindow               db 'GetDpiForWindow', 0
 szGetSystemMetricsForDpi        db 'GetSystemMetricsForDpi', 0
+
+hexlut  db '0123456789ABCDEF'
+
+szWM_GETDPISCALEDSIZE db 'WM_GETDPISCALEDSIZE dpi = 0x', 0
+szWM_DPICHANGED db 'WM_DPICHANGED  dpi = 0x', 0
+szCRLF db 13, 10, 0
 
 ALIGN 4
 
@@ -174,6 +182,8 @@ szAboutMenu     db ABOUT_MENU_BUF dup (?)   ; Caption of the menu item
                 ; About the program
 szAboutTitle    dd ABOUT_TITLE_BUF dup (?)  ; Caption of the About message
 szAboutInfo     dd ABOUT_INFO_BUF  dup (?)  ; Text of the About message
+
+hexstr  db 16 dup (?)
 
 
 ;
@@ -460,6 +470,41 @@ wmprintclient:
         jmp     finish
 
 wmdpichanged:
+        push    L offset szWM_DPICHANGED
+        call    OutputDebugStringA
+        mov     ebx, [wparam]
+        and     ebx, 00FFh      ; LOWORD(wParam) = X-axis DPI
+        call    tohexstr
+        push    L offset hexstr
+        call    OutputDebugStringA
+        push    L offset szCRLF
+        call    OutputDebugStringA
+
+        mov     ebx, [wparam]
+        and     ebx, 00FFh      ; LOWORD(wParam) = X-axis DPI
+;        cmp     [dpi], ebx
+;        je      dpi_updatesize
+
+        mov     eax, [hwnd]
+        call    RescaleWindow
+
+        ; Update the position of the window
+        ; Keep the x, y as suggested but use
+        ; the calculated width
+
+        mov     esi, [lparam]
+        push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
+        push    [windowHeight]
+        push    [windowWidth]
+        mov     ebx, (RECT PTR [esi]).rcTop
+        push    ebx
+        mov     edx, (RECT PTR [esi]).rcLeft
+        push    edx
+        push    L 0                     ; hWndInsertAfter
+        push    [hwnd]
+        call    SetWindowPos
+
+dpi_updatesize:
         mov     esi, [lparam]
         ; Set the new size to the window
         push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
@@ -485,19 +530,21 @@ wmdpichanged:
         jmp     finish
 
 wmgetdpiscaledsize:
+        push    L offset szWM_GETDPISCALEDSIZE
+        call    OutputDebugStringA
+        mov     ebx, [wparam]
+        call    tohexstr
+        push    L offset hexstr
+        call    OutputDebugStringA
+        push    L offset szCRLF
+        call    OutputDebugStringA
+
         ; wparam contains a DPI value
         ; lparam pointer to SIZE (TEXTSIZE) structure
         mov     eax, [hwnd]             ; Pass the window handle
         mov     ebx, [wparam]
-        and     ebx, 00FFh              ; Preserve lo word only
-        call    UpdateFont
-        mov     ebx, [wparam]
-        and     ebx, 00FFh              ; Preserve lo word only
-        call    UpdateWindowSize        ; Calculate the new window size
-
-        call    DestroyIcons
-        mov     esi, [IconWidth]
-        call    LoadIcons
+        ;and     ebx, 00FFh              ; Preserve lo word only
+        call    RescaleWindow
 
         mov     esi, [lparam]
         mov     eax, [windowWidth]
@@ -851,7 +898,7 @@ UpdateFont proc uses ebx edi esi
 
         mov     [hWnd], eax
 
-        ; Get DPI from DC
+        ; Get DC for measuring icons
         push    eax                     ; eax = hWnd
         call    GetDC
         mov     [hDC], eax
@@ -1068,4 +1115,50 @@ nextWidth:
         ret
 UpdateWindowSize endp
 ;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+; eax -> hWnd
+; ebx -> DPI
+RescaleWindow proc
+        mov     [dpi], ebx
+
+        ; UpdateFont preserves ebx, no need to save it here
+        call    UpdateFont
+        call    UpdateWindowSize        ; Calculate the new window size
+
+        call    DestroyIcons
+        mov     esi, [IconWidth]
+        call    LoadIcons
+
+        ret
+RescaleWindow endp
+;-----------------------------------------------------------------------------
+
+; ebx -> the number
+tohexstr proc
+        ;rol     ebx, 4
+        xor     eax, eax
+
+        mov     al, bh
+        shr     al, 4
+        mov     al, [hexlut + eax]
+        mov     [hexstr], al
+        mov     al, bh
+        and     al, 0Fh
+        mov     al, [hexlut + eax]
+        mov     [hexstr + 1], al
+
+        mov     al, bl
+        shr     al, 4
+        mov     al, [hexlut + eax]
+        mov     [hexstr + 2], al
+        mov     al, bl
+        and     al, 0Fh
+        mov     al, [hexlut + eax]
+        mov     [hexstr + 3], al
+
+        mov     [hexstr + 4], BYTE PTR 0
+        ret
+tohexstr endp
+
 end start

@@ -17,6 +17,16 @@ TEXTSIZE STRUC                          ; Structure for getting text size
   tcy dd ?
 TEXTSIZE ENDS
 
+ICON_NUM = 6
+
+ICONTEXTSIZE STRUC
+        itWidth     dd ?
+                    dd ICON_NUM - 1 dup (?)
+        itHeight    dd ?
+        itMaxWidth  dd ?
+ICONTEXTSIZE ENDS
+
+
 ;
 ; External functions from Win32 API
 ;
@@ -38,6 +48,9 @@ hFont           dd 0                    ; Handle to the font
 
 bAboutLoaded    db 0                    ; About info loaded?
 
+; Logical font for creating HFONT
+Font LOGFONT <0, 0, 900, 900, 700, 0, 0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, VARIABLE_PITCH OR FF_DONTCARE>
+
 ;
 ; Constant data (read-only)
 ;
@@ -47,7 +60,6 @@ szClassName     db 'stdIcons32', 0      ; Name of the window class
 
 ALIGN 4
 
-ICON_NUM = 6
 
 ; IDs of the icons
 IconNames       dd IDI_APPLICATION
@@ -122,16 +134,15 @@ windowHeight    dd ?
 
                 ; Handles of the loaded icons
 hIcons          dd ICON_NUM dup (?)
-                ; Widths of the rendered icon text
-IconTextWidth   dd ICON_NUM dup (?)
-                ; and its height
-IconTextHeight  dd ?
+
+; The size of the rendered icon name text
+iconTextSize    ICONTEXTSIZE <?>
+
+tmpIconTextSize ICONTEXTSIZE <?>
 
                 ; The width of the icon
 IconWidth       dd ?
 
-                ; Max width of the rendered icon text
-IconMaxWidth    dd ?
 
 hComCtlLib              dd ?
 LoadIconWithScaleDown   dd ?
@@ -158,8 +169,6 @@ TEXT_ICON_GAP = 4
 hSysMenu        dd ?                    ; Handle to (system) window menu
 
 txtSize         TEXTSIZE <?>            ; Text size
-
-Font            LOGFONT <?>             ; Logical font
 
 ALIGN 4
 
@@ -296,10 +305,20 @@ createWindow:
 
         mov     [newhwnd], eax          ; Save the handle to the window
 
-        mov     ebx, [dpi]              ; DPI loaded in WM_CREATE
-        call    UpdateFont              ; Create the font
-                                        ; eax still contains the hWnd
 
+        call    LoadFontName
+
+        mov     ebx, [dpi]              ; DPI loaded in WM_CREATE
+        call    CreateFont              ; Create the font
+        mov     [hFont], eax
+
+        push    L offset iconTextSize
+        push    [hFont]
+        push    [newhwnd]
+        call    MeasureIconText
+
+        mov     esi, offset iconTextSize
+        mov     edi, offset windowWidth
         call    UpdateWindowSize        ; Calculate the window size
 
 ;
@@ -482,27 +501,10 @@ wmdpichanged:
 
         mov     ebx, [wparam]
         and     ebx, 00FFh      ; LOWORD(wParam) = X-axis DPI
-;        cmp     [dpi], ebx
-;        je      dpi_updatesize
 
-        mov     eax, [hwnd]
-        call    RescaleWindow
-
-        ; Update the position of the window
-        ; Keep the x, y as suggested but use
-        ; the calculated width
-
-        mov     esi, [lparam]
-        push    L SWP_NOACTIVATE + SWP_NOSENDCHANGING + SWP_NOZORDER
-        push    [windowHeight]
-        push    [windowWidth]
-        mov     ebx, (RECT PTR [esi]).rcTop
-        push    ebx
-        mov     edx, (RECT PTR [esi]).rcLeft
-        push    edx
-        push    L 0                     ; hWndInsertAfter
-        push    [hwnd]
-        call    SetWindowPos
+        mov     edi, [hwnd]
+        mov     esi, offset iconTextSize
+        call    UpdateAllData
 
 dpi_updatesize:
         mov     esi, [lparam]
@@ -541,8 +543,9 @@ wmgetdpiscaledsize:
 
         ; wparam contains a DPI value
         ; lparam pointer to SIZE (TEXTSIZE) structure
-        mov     eax, [hwnd]             ; Pass the window handle
+        mov     edi, [hwnd]             ; Pass the window handle
         mov     ebx, [wparam]
+        mov     esi, offset tmpIconTextSize
         ;and     ebx, 00FFh              ; Preserve lo word only
         call    RescaleWindow
 
@@ -718,7 +721,7 @@ ifdef DEBUG_GRID
         mov     [rc.rcLeft], 0
         mov     [rc.rcTop], MARGIN
         mov     [rc.rcRight], MARGIN
-        mov     eax, IconMaxWidth
+        mov     eax, [iconTextSize.itMaxWidth]
         add     eax, MARGIN
         mov     [rc.rcBottom], eax
 
@@ -732,7 +735,7 @@ ifdef DEBUG_GRID
         mov     [rc.rcTop], 0
         add     [rc.rcBottom], MARGIN
 
-        mov     eax, [IconTextHeight]
+        mov     eax, [iconTextSize.itHeight]
         add     [rc.rcRight], eax
 
         mov     ecx, ICON_NUM
@@ -748,7 +751,7 @@ PaintGrid:                              ; Paint background for text, gap,
         call    FillRect                ; Text background
 
 
-        mov     eax, [IconTextHeight]
+        mov     eax, [iconTextSize.itHeight]
         add     [rc.rcLeft], eax
         add     [rc.rcRight], eax
         add     [rc.rcRight], TEXT_ICON_GAP
@@ -784,7 +787,7 @@ PaintGrid:                              ; Paint background for text, gap,
 
         add     [rc.rcLeft], ICONS_GAP
         add     [rc.rcRight], ICONS_GAP
-        mov     eax, [IconTextHeight]
+        mov     eax, [iconTextSize.itHeight]
         add     [rc.rcRight], eax
 
         pop     ecx
@@ -807,7 +810,7 @@ endif ; DEBUG_GRID
         mov     ebx, 0                  ; Index (offset) of icon handle
 
         mov     edx, MARGIN             ; x of the icon
-        add     edx, [IconTextHeight]
+        add     edx, [iconTextSize.itHeight]
         add     edx, TEXT_ICON_GAP
         mov     ecx, ICON_NUM           ; Number of icons
 DrawIcons:
@@ -830,7 +833,7 @@ DrawIcons:
 
         add     ebx,  4                 ; Next hIcon in the array
         add     edx, ICONS_GAP
-        add     edx, [IconTextHeight]
+        add     edx, [iconTextSize.itHeight]
         add     edx, [IconWidth]
         add     edx, TEXT_ICON_GAP
         loop    DrawIcons
@@ -857,7 +860,7 @@ IconText:
         push    edx
 
         mov     eax, MARGIN             ; Calculate y:
-        add     eax, IconTextWidth[ebx] ; MARGIN + IconTextWidth
+        add     eax, iconTextSize.itWidth[ebx] ; MARGIN + IconTextWidth
 
         ; Draw the text
         push    IconLen[ebx]            ; Text length
@@ -873,7 +876,7 @@ IconText:
         add     ebx, 4                  ; Next icon text offset
 
         add     edx, ICONS_GAP          ; Calculate x of the next text
-        add     edx, [IconTextHeight]   ; x + ICONS_GAP + IconTextHeight
+        add     edx, [iconTextSize.itHeight]   ; x + ICONS_GAP + IconTextHeight
         add     edx, [IconWidth]        ; + IconWidth + TEXT_ICON_GAP 
         add     edx, TEXT_ICON_GAP
         loop    IconText
@@ -887,29 +890,8 @@ IconText:
 PaintWindow endp
 
 ;-----------------------------------------------------------------------------
-; Creates the font and measures the text
-;
-; eax contains the window handle
-; ebx contains the DPI or zero
-UpdateFont proc uses ebx edi esi
-        LOCAL   hWnd: DWORD
-        LOCAL   hDC: DWORD
-        LOCAL   oldFont: DWORD
-
-        mov     [hWnd], eax
-
-        ; Get DC for measuring icons
-        push    eax                     ; eax = hWnd
-        call    GetDC
-        mov     [hDC], eax
-
-        push    L 72
-        push    ebx
-        push    BASE_FONT_SIZE
-        call    MulDiv
-        neg     eax
-        mov     esi, eax                ; esi stores the height of the font
-
+; Deletes hFont if it's non-zero
+DeleteFont proc
         mov     eax, [hFont]
         or      eax, eax
         jz      no_font
@@ -918,31 +900,50 @@ UpdateFont proc uses ebx edi esi
         call    DeleteObject
 
 no_font:
-        ; Create the font
-        mov     edi, offset Font        ; Zero LOGFONT structure
-        mov     ecx, TYPE Font
-        cld
-        xor     al, al
-        rep     stosb
+        ret
+DeleteFont endp
 
-        mov     [Font.lfHeight], esi
-        mov     [Font.lfOrientation], 900
-        mov     [Font.lfEscapement], 900
-        mov     [Font.lfWeight], 700    ; = FW_BOLD
-        mov     [Font.lfCharSet], DEFAULT_CHARSET
-
+;-----------------------------------------------------------------------------
+; Loads the font name from resources
+LoadFontName proc
         push    L SIZE Font.lfFaceName  ; cchBufferMax
         push    offset Font.lfFaceName  ; lpBuffer
         push    L IDS_FONT_NAME         ; uID
         push    [hInst]
         call    LoadStringA
+        ret
+LoadFontName endp
+
+;-----------------------------------------------------------------------------
+; Creates the font
+; ebx = DPI
+CreateFont proc
+        push    L 72                    ; Default DPI
+        push    ebx                     ; Current DPI
+        push    BASE_FONT_SIZE
+        call    MulDiv
+        neg     eax
+
+        ; Update the size (height) of the font
+        mov     [Font.lfHeight], eax
 
         push    offset Font
         call    CreateFontIndirectA     ; Create the font
 
-        mov     [hFont], eax            ; and save it in variable
+        ret
+CreateFont endp
 
-        push    eax                     ; Select the newly created font
+
+MeasureIconText proc uses ebx edi esi, hwnd: DWORD, hfont: DWORD, itsize: DWORD
+        LOCAL   hDC: DWORD
+        LOCAL   oldFont: DWORD
+
+        ; Get DC for measuring icons
+        push    [hwnd]
+        call    GetDC
+        mov     [hDC], eax
+
+        push    [hfont]                 ; Select the newly created font
         push    [hDC]
         call    SelectObject
         mov     [oldFont], eax          ; Preserve the old font
@@ -950,6 +951,8 @@ no_font:
         ; Measure the text for the icons
         mov     ecx, ICON_NUM           ; Number of icons
         xor     ebx, ebx                ; Index (offset) in the array
+
+        mov     esi, [itsize]
 
 MeasureIcons:
         push    ecx                     ; Preserve the counter
@@ -962,36 +965,38 @@ MeasureIcons:
         call    GetTextExtentPoint32A
 
         mov     eax, [txtSize.tcx]      ; Save text width
-        mov     IconTextWidth[ebx], eax
+        mov     [esi + ebx], eax
 
         pop     ecx
         add     ebx, 4
         loop    MeasureIcons
 
         mov     eax, [txtSize.tcy]      ; Save text height
-        mov     [IconTextHeight], eax   ; (it's the same for all icons)
+        mov     (ICONTEXTSIZE PTR [esi]).itHeight, eax   ; (it's the same for all icons)
 
         push    [oldFont]               ; Select the old font
         push    [hDC]
         call    SelectObject
 
         push    [hDC]                   ; Release HDC
-        push    [hWnd]
+        push    [hwnd]
         call    ReleaseDC
 
         ret
-
-UpdateFont endp
+MeasureIconText endp
 
 ;-----------------------------------------------------------------------------
 ; Calculates the window size
-; ebx -> dpi
+; ebx = dpi
+; esi -> iconTextSize
+; edi -> width, height
 UpdateWindowSize proc
         LOCAL   cxFixedFrame    : DWORD
         LOCAL   cxEdge          : DWORD
         LOCAL   cyFixedFrame    : DWORD
         LOCAL   cyEdge          : DWORD
         LOCAL   cyCaption       : DWORD
+        LOCAL   cxIconWidth     : DWORD
 
         cmp     [GetSystemMetricsForDpi], 0
         je      stdMetrics
@@ -1000,7 +1005,7 @@ UpdateWindowSize proc
         push    ebx
         push    L 11 ; SM_CXICON
         call    [GetSystemMetricsForDpi]
-        mov     [IconWidth], eax
+        mov     [cxIconWidth], eax
 
         push    ebx
         push    L 8 ; SM_CXFIXEDFRAME
@@ -1031,7 +1036,7 @@ UpdateWindowSize proc
 stdMetrics:
         push    L 11 ; SM_CXICON
         call    GetSystemMetrics
-        mov     [IconWidth], eax
+        mov     [cxIconWidth], eax
 
         push    L 8 ; SM_CXFIXEDFRAME
         call    GetSystemMetrics
@@ -1056,8 +1061,8 @@ stdMetrics:
 calcWidth:
         ; width = (IconTextHeight + TEXT_ICON_GAP
         ;         + IconWidth + ICONS_GAP) * ICON_NUM
-        mov     eax, [IconWidth]
-        add     eax, [IconTextHeight]
+        mov     eax, [cxIconWidth]
+        add     eax, (ICONTEXTSIZE PTR [esi]).itHeight
         add     eax, TEXT_ICON_GAP
         add     eax, ICONS_GAP
         mov     edx, ICON_NUM
@@ -1074,15 +1079,15 @@ calcWidth:
         shl     edx, 1
         add     eax, edx
 
-        mov     [windowWidth], eax
+        mov     [edi], eax
 
         ; Find the maximum width of the text
-        mov     esi, offset IconTextWidth
         mov     edx, [esi]
         add     esi, 4
         mov     ecx, ICON_NUM
         dec     ecx
-        cld
+        ; Not needed: direction must be cleared
+        ; cld
 MaxTextWidth:        
         lodsd
         cmp     eax, edx
@@ -1094,7 +1099,8 @@ nextWidth:
         loop    MaxTextWidth
 
         ; height = IconMaxWidth ...
-        mov     [IconMaxWidth], edx
+        ; esi + 4 points to maxWidth in ICONTEXTSIZE
+        mov     [esi + 4], edx
 
         ; eax = SM_CYFIXEDFRAME + SM_CYEDGE + MARGIN
         mov     eax, [cyFixedFrame]
@@ -1110,29 +1116,70 @@ nextWidth:
         ; (edx = [IconMaxWidth]) + (eax = [frame_height])
         add     edx, eax
 
-        mov     [windowHeight], edx
+        mov     [edi + 4], edx
 
         ret
 UpdateWindowSize endp
 ;-----------------------------------------------------------------------------
 
 ;-----------------------------------------------------------------------------
-; eax -> hWnd
+; edi -> hWnd
 ; ebx -> DPI
+; esi -> ICONTEXTSIZE
 RescaleWindow proc
-        mov     [dpi], ebx
+        call    CreateFont
+        push    eax
 
-        ; UpdateFont preserves ebx, no need to save it here
-        call    UpdateFont
+        push    esi
+        push    eax
+        push    edi
+        call    MeasureIconText
+
+        ; eax = hFont already pushed
+        call    DeleteObject
+
+;        mov     esi, offset iconTextSize
+        mov     edi, offset windowWidth
         call    UpdateWindowSize        ; Calculate the new window size
-
-        call    DestroyIcons
-        mov     esi, [IconWidth]
-        call    LoadIcons
 
         ret
 RescaleWindow endp
 ;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+; edi -> hWnd
+; ebx -> DPI
+; esi -> ICONTEXTSIZE
+UpdateAllData proc
+        mov     [dpi], ebx
+
+        ; UpdateFont preserves ebx, no need to save it here
+        call    DeleteFont
+        call    CreateFont
+        mov     [hFont], eax
+
+        push    esi
+        push    eax
+        push    edi
+        call    MeasureIconText
+
+;        mov     esi, offset iconTextSize
+        mov     edi, offset windowWidth
+        call    UpdateWindowSize        ; Calculate the new window size
+
+        call    DestroyIcons
+
+        push    [dpi]
+        push    L 11 ; SM_CXICON
+        call    [GetSystemMetricsForDpi]
+        mov     [IconWidth], eax
+        mov     esi, eax
+        call    LoadIcons
+
+        ret
+UpdateAllData endp
+;-----------------------------------------------------------------------------
+
 
 ; ebx -> the number
 tohexstr proc

@@ -1,2 +1,2 @@
 ﻿@echo off
-nmake DEBUG= INCLUDEPATH=C:\devtools\assembler\tasm\include %*
+nmake DEBUG= LISTING= INCLUDEPATH=C:\devtools\assembler\tasm\include %*
